@@ -12,8 +12,7 @@
 | Predicate&lt;T&gt; | 将 T 作为输入，返回一个布尔值 |
 | Consumer&lt;T&gt; | 将 T 作为输入，不返回任何内容 |
 | Supplier&lt;T, R&gt; | 没有任何输入，返回T |
-|  |  |
-
+| BiConsumer&lt;T, U&gt; |
 
 Function&lt;T, R&gt;：将 T 作为输入，返回 R 作为输出，他还包含了和其他函数组合的默认方法。
 
