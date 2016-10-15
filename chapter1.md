@@ -24,6 +24,7 @@
 | 非静态方法引用 | Object::toString | \(x\) -&gt; x.toString\(\); |
 | 特定对象的方法引用 | x::toString | \(\) -&gt; x.toString\(\); |
 | 构造函数引用 | ArrayList::new | \(\) -&gt; new ArrayList&lt;&gt;\(\); |
+
 这两组语法组合使用可发挥Lambda的最大威力。
 
 > ### 接口增强
@@ -57,6 +58,10 @@ public interface StaticFunInterface {
 }
 ```
 
+> ### Optional
+
+用于解决Null Pointer Exception
+
 > ### 集合的Stream操作
 
 串行流与并行流
@@ -70,4 +75,22 @@ stream\(\).sequential\(\) 返回串行的流
 stream\(\).parallel\(\) 返回并行的流
 
 中间操作：
+
+> map \(mapToInt, flatMap 等\)、 filter、 distinct、 sorted、 peek、 limit、 skip、 parallel、 sequential、 unordered
+
+终止操作：
+
+> forEach、 forEachOrdered、 toArray、 reduce、 collect、 min、 max、 count、 anyMatch、 allMatch、 noneMatch、 findFirst、 findAny、 iterator
+
+短路操作：
+
+> anyMatch、 allMatch、 noneMatch、 findFirst、 findAny、 limit
+
+无限流的生产方法：
+
+> Stream.generate, Stream.iterate
+
+分组、拆分操作：
+
+> Collectors.groupingBy, Collectors. partitioningBy
 
