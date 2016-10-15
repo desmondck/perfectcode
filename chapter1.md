@@ -31,9 +31,6 @@
 default关键字为接口提供默认实现
 
 ```
-
-
-
 public interface DefaultFunInterface {
 
  // 定义默认方法 count
@@ -52,19 +49,13 @@ public interface DefaultFunInterface {
 
 为接口增加静态方法，该静态方法可直接通过接口调用
 
-\`\`\`
-
+```
 public interface StaticFunInterface {
-
-public static int find\(\) {
-
-return 1;
-
+    public static int find() {
+        return 1;
+    }
 }
-
-}
-
-\`\`\`
+```
 
 > ### 集合的Stream操作
 
