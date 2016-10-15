@@ -12,16 +12,11 @@
 | Predicate&lt;T&gt; | 将 T 作为输入，返回一个布尔值 |
 | Consumer&lt;T&gt; | 将 T 作为输入，不返回任何内容 |
 | Supplier&lt;T, R&gt; | 没有任何输入，返回T |
-| BiConsumer&lt;T, U&gt; |
+| BiConsumer&lt;T, U&gt; | T, U做为输入，不返回任何内容 |
 
-Function&lt;T, R&gt;：将 T 作为输入，返回 R 作为输出，他还包含了和其他函数组合的默认方法。
-
-Predicate&lt;T&gt; ：将 T 作为输入，返回一个布尔值作为输出，该接口包含多种默认方法来将 Predicate 组合成其他复杂的逻辑（与、或、非）。
- ：，表示在单个参数上的操作。
+除此上述罗列的用法之外，还包括一组类似的泛型接口声明，详细参见[java.util.function](http://javadocs.techempower.com/jdk18/api/java/util/function/package-summary.html)
 
 和上述接口同时提出的还有如下一组语法糖：
-
----
 
 | 说明 | 方法引用 | 等价的lambda表达式 |
 | --- | --- | --- |
@@ -29,6 +24,7 @@ Predicate&lt;T&gt; ：将 T 作为输入，返回一个布尔值作为输出，�
 | 非静态方法引用 | Object::toString | \(x\) -&gt; x.toString\(\); |
 | 特定对象的方法引用 | x::toString | \(\) -&gt; x.toString\(\); |
 | 构造函数引用 | ArrayList::new | \(\) -&gt; new ArrayList&lt;&gt;\(\); |
+这两组语法组合使用可发挥Lambda的最大威力。
 
 > ### 接口增强
 
