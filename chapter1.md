@@ -17,8 +17,7 @@ Consumer&lt;T&gt; ：将 T 作为输入，不返回任何内容，表示在单�
 | 说明 | 方法引用 | 等价的lambda表达式 |
 | --- | --- | --- |
 | 静态方法引用 | String.valueOf | \(x\) -&gt; String.valueOf\(x\); |
-
-
+|  |  |  |
 
 > ### 接口增强
 
