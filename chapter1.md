@@ -1,46 +1,22 @@
-# First Chapter
-
-GitBook allows you to organize your book into chapters, each chapter is stored in a separate file like this one.
-
 # Java
-
-
 
 ## Java8的新特性
 
-
-
 > ### Lambda表达式
-
-
 
 为简化Lambda表达式应用提供的泛型接口类
 
-
-
 Function&lt;T, R&gt;：将 T 作为输入，返回 R 作为输出，他还包含了和其他函数组合的默认方法。
-
-
 
 Predicate&lt;T&gt; ：将 T 作为输入，返回一个布尔值作为输出，该接口包含多种默认方法来将 Predicate 组合成其他复杂的逻辑（与、或、非）。
 
-
-
 Consumer&lt;T&gt; ：将 T 作为输入，不返回任何内容，表示在单个参数上的操作。
-
-
 
 和上述接口同时提出的还有如下一组语法糖：
 
-
-
 > ### 接口增强
 
-
-
 default关键字为接口提供默认实现
-
-
 
 ```
 
@@ -62,56 +38,33 @@ public interface DefaultFunInterface {
 
 ```
 
-
-
 为接口增加静态方法，该静态方法可直接通过接口调用
 
-
-
 \`\`\`
-
-
 
 public interface StaticFunInterface {
 
- public static int find\(\) {
+public static int find\(\) {
 
- return 1;
+return 1;
 
- }
+}
 
- }
+}
 
 \`\`\`
 
-
-
 > ### 集合的Stream操作
-
-
 
 串行流与并行流
 
-
-
 stream\(\)默认为串行流
-
-
 
 parallelStream\(\)默认为并行流
 
-
-
 stream\(\).sequential\(\) 返回串行的流
-
-
 
 stream\(\).parallel\(\) 返回并行的流
 
-
-
 中间操作：
-
-
-
 
