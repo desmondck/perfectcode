@@ -8,7 +8,7 @@
 
 | 泛型接口 | 说明 |
 | --- | --- |
-| Function |  |
+| Function<T, R> |  |
 
 Function&lt;T, R&gt;：将 T 作为输入，返回 R 作为输出，他还包含了和其他函数组合的默认方法。
 
