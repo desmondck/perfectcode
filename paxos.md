@@ -170,20 +170,12 @@ A proposer can make multiple proposals, so long as it follows the algorithm for 
 To learn that a value has been chosen, a learner must find out that a proposal has been accepted by a majority of acceptors. The obvious algorithm is to have each acceptor, whenever it accepts a proposal, respond to all learners, sending them the proposal. This allows learners to find out about a chosen value as soon as possible, but it requires each acceptor to respond to each learner—a number of responses equal to the product of the number of acceptors and the number of learners.
 
 The assumption of non-Byzantine failures makes it easy for one learner  to find out from another learner that a value has been accepted. We can have the acceptors respond with their acceptances to a distinguished learner, which in turn informs the other learners when a value has been chosen. This approach requires an extra round for all the learners to discover the chosen  
- value. It is also less reliable, since the distinguished learner could fail. But it requires a number of responses equal only to the sum of the number of  
- acceptors and the number of learners.
+ value. It is also less reliable, since the distinguished learner could fail. But it requires a number of responses equal only to the sum of the number of acceptors and the number of learners.
 
-More generally, the acceptors could respond with their acceptances to  
- some set of distinguished learners, each of which can then inform all the  
- learners when a value has been chosen. Using a larger set of distinguished learners provides greater reliability at the cost of greater communication  
- complexity.
+More generally, the acceptors could respond with their acceptances to some set of distinguished learners, each of which can then inform all the learners when a value has been chosen. Using a larger set of distinguished learners provides greater reliability at the cost of greater communication complexity.
 
-Because of message loss, a value could be chosen with no learner ever  
- finding out. The learner could ask the acceptors what proposals they have  
- accepted, but failure of an acceptor could make it impossible to know whether or not a majority had accepted a particular proposal. In that case, learners  
- will find out what value is chosen only when a new proposal is chosen. If  
- a learner needs to know whether a value has been chosen, it can have a  
- proposer issue a proposal, using the algorithm described above.
+Because of message loss, a value could be chosen with no learner ever finding out. The learner could ask the acceptors what proposals they have accepted, but failure of an acceptor could make it impossible to know whether or not a majority had accepted a particular proposal. In that case, learners will find out what value is chosen only when a new proposal is chosen. If  
+ a learner needs to know whether a value has been chosen, it can have a proposer issue a proposal, using the algorithm described above.
 
 > 该协议要求：P2C中acceptor每次accept一个新的提案{n,v}，则该提案需要被落盘。由此保证P2C得以正确进行下去
 >
