@@ -211,28 +211,11 @@ Because of message loss, a value could be chosen with no learner ever finding ou
 
 ### 2.4 Progress
 
-It’s easy to construct a scenario in which two proposers each keep issuing  
- a sequence of proposals with increasing numbers, none of which are ever  
- chosen. Proposer p completes phase 1 for a proposal number n1. Another  
- proposer q then completes phase 1 for a proposal number n2 &gt; n1. Proposer  
- p’s phase 2 accept requests for a proposal numbered n1 are ignored because the acceptors have all promised not to accept any new proposal numbered  
- less than n2. So, proposer p then begins and completes phase 1 for a new  
- proposal number n3 &gt; n2, causing the second phase 2 accept requests of  
- proposer q to be ignored. And so on.
+It’s easy to construct a scenario in which two proposers each keep issuing a sequence of proposals with increasing numbers, none of which are ever chosen. Proposer p completes phase 1 for a proposal number n1. Another proposer q then completes phase 1 for a proposal number n2 &gt; n1. Proposer p’s phase 2 accept requests for a proposal numbered n1 are ignored because the acceptors have all promised not to accept any new proposal numbered less than n2. So, proposer p then begins and completes phase 1 for a new proposal number n3 &gt; n2, causing the second phase 2 accept requests of proposer q to be ignored. And so on.
 
-To guarantee progress, a distinguished proposer must be selected as the  
- only one to try issuing proposals. If the distinguished proposer can com  
-municate successfully with a majority of acceptors, and if it uses a proposal  
- with number greater than any already used, then it will succeed in issuing a  
-proposal that is accepted. By abandoning a proposal and trying again if it  
- learns about some request with a higher proposal number, the distinguished  
- proposer will eventually choose a high enough proposal number.
+To guarantee progress, a distinguished proposer must be selected as the only one to try issuing proposals. If the distinguished proposer can communicate successfully with a majority of acceptors, and if it uses a proposal with number greater than any already used, then it will succeed in issuing aproposal that is accepted. By abandoning a proposal and trying again if it learns about some request with a higher proposal number, the distinguished proposer will eventually choose a high enough proposal number.
 
-If enough of the system \(proposer, acceptors, and communication net  
-work\) is working properly, liveness can therefore be achieved by electing a  
- single distinguished proposer. The famous result of Fischer, Lynch, and Pat  
-terson \[1\] implies that a reliable algorithm for electing a proposer must use  
- either randomness or real time—for example, by using timeouts. However,  
+If enough of the system \(proposer, acceptors, and communication network\) is working properly, liveness can therefore be achieved by electing a single distinguished proposer. The famous result of Fischer, Lynch, and Patterson \[1\] implies that a reliable algorithm for electing a proposer must use either randomness or real time—for example, by using timeouts. However,  
  safety is ensured regardless of the success or failure of the election.
 
 > 这里讲到一种可能导致paxos陷入死循环的场景，并提出了一种简单的解决方案：选择一个主proposer，所有的提议由主proposer发起
