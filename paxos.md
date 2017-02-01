@@ -159,23 +159,18 @@ Putting the actions of the proposer and acceptor together, we see that the algor
 A proposer can make multiple proposals, so long as it follows the algorithm for each one. It can abandon a proposal in the middle of the protocol at any time. \(Correctness is maintained, even though requests and/or responses for the proposal may arrive at their destinations long after the proposal was abandoned.\) It is probably a good idea to abandon a proposal if some  
  proposer has begun trying to issue a higher-numbered one. Therefore, if an acceptor ignores a prepare or accept request because it has already received a prepare request with a higher number, then it should probably inform the proposer, who should then abandon its proposal. This is a performance optimization that does not affect correctness.
 
+> 注意：本节讲述的是如何chosen一个值
+>
+> 之所以强调值，是因为proposal由number、value两部分组成，但我们只关心value，而不关心number，也不关心proposal
+>
+> 也就是说，我们可能提了多个不同的提案\(由不同的编号\)，最终chosen的提案也可能有多个，但chosen的value只有一个
+
 ### 2.3 Learning a Chosen Value
 
-To learn that a value has been chosen, a learner must find out that a pro  
-posal has been accepted by a majority of acceptors. The obvious algorithm  
- is to have each acceptor, whenever it accepts a proposal, respond to all  
- learners, sending them the proposal. This allows learners to find out about  
- a chosen value as soon as possible, but it requires each acceptor to respond  
- to each learner—a number of responses equal to the product of the number  
- of acceptors and the number of learners.
+To learn that a value has been chosen, a learner must find out that a proposal has been accepted by a majority of acceptors. The obvious algorithm is to have each acceptor, whenever it accepts a proposal, respond to all learners, sending them the proposal. This allows learners to find out about a chosen value as soon as possible, but it requires each acceptor to respond to each learner—a number of responses equal to the product of the number of acceptors and the number of learners.
 
-The assumption of non-Byzantine failures makes it easy for one learner  
- to find out from another learner that a value has been accepted. We can  
- have the acceptors respond with their acceptances to a distinguished learner,  
- which in turn informs the other learners when a value has been chosen. This  
- approach requires an extra round for all the learners to discover the chosen  
- value. It is also less reliable, since the distinguished learner could fail. But  
- it requires a number of responses equal only to the sum of the number of  
+The assumption of non-Byzantine failures makes it easy for one learner  to find out from another learner that a value has been accepted. We can have the acceptors respond with their acceptances to a distinguished learner, which in turn informs the other learners when a value has been chosen. This approach requires an extra round for all the learners to discover the chosen  
+ value. It is also less reliable, since the distinguished learner could fail. But it requires a number of responses equal only to the sum of the number of  
  acceptors and the number of learners.
 
 More generally, the acceptors could respond with their acceptances to  
@@ -205,6 +200,7 @@ Because of message loss, a value could be chosen with no learner ever
 >   b\) 每次accpet一个提案时，通知到一个主leanrer，
 >
 > * chosen value确认：超过半数的acceptor向主learner发来了相同的accepted value，该accepted value即为chosen value
+>
 > * 主learner异常导致其他Learner学不到chosen值
 >
 > c\) 每次accept一个提案时，通知到K个主learner  
