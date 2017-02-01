@@ -133,59 +133,81 @@ P1a.一个acceptor可以接受一个编号为n的提案，只要它还未响应�
 Observe that P1a subsumes P1. We now have a complete algorithm for choosing a value that satisfies the required safety properties—assuming unique proposal numbers. The final algorithm is obtained by making one small optimization. Suppose an acceptor receives a prepare request numbered n, but it has already responded to a prepare request numbered greater than n, thereby promising not to accept any new proposal numbered n. There is then no reason for the acceptor to respond to the new prepare request, since it will not accept the proposal numbered n that the proposer wants to issue. So we have the acceptor ignore such a prepare request.** We also have it ignore a prepare request for a proposal it has already accepted.**
 
 > **P1：一个acceptor必须通过\(accept\)它收到的第一个提案**
-
+>
 > **P1a.一个acceptor可以接受一个编号为n的提案，只要它还未响应任何编号大于n的prepare请求**
 >
 > 这里针对P1的定义做了进一步的强化
 
-With this optimization, an acceptor needs to **remember** only the **highestnumbered** proposal that it has ever accepted and the number of the highestnumbered prepare request to which it has responded. **Because P2c must be kept invariant regardless of failures, an acceptor must remember this information even if it fails and then restarts**. Note that the proposer can always abandon a proposal and forget all about it—as long as it never tries to issue another proposal with the same number. 
+With this optimization, an acceptor needs to **remember** only the **highestnumbered** proposal that it has ever accepted and the number of the highestnumbered prepare request to which it has responded. **Because P2c must be kept invariant regardless of failures, an acceptor must remember this information even if it fails and then restarts**. Note that the proposer can always abandon a proposal and forget all about it—as long as it never tries to issue another proposal with the same number.
 
 > P2C的不变性在acceptor异常、重启等状态下得以保存，因此acceptor必须将该信息持久化
 
-Putting the actions of the proposer and acceptor together, we see that the algorithm operates in the following two phases. 
+Putting the actions of the proposer and acceptor together, we see that the algorithm operates in the following two phases.
 
 **Phase 1. **
 
-\(a\) A proposer selects a proposal number n and sends a prepare request with number n to a majority of acceptors. 
+\(a\) A proposer selects a proposal number n and sends a prepare request with number n to a majority of acceptors.
 
-\(b\) If an acceptor receives a prepare request with number n greater than that of any prepare request to which it has already responded, then it responds to the request with a promise not to accept any more proposals numbered less than n and with the highest-numbered proposal \(if any\) that it has accepted.
+\(b\) If an acceptor receives a prepare request with number n greater than that of any prepare request to which it has already responded, then it responds to the request with a promise not to accept any more proposals numbered less than n and with the highest-numbered proposal _**value**_\(if any\) that it has accepted.
 
 **Phase 2. **
 
-\(a\) If the proposer receives a response to its prepare requests\(numbered n\) from a majority of acceptors, then it sends an accept
+\(a\) If the proposer receives a response to its prepare requests\(numbered n\) from a majority of acceptors, then it sends an accept request to each of those acceptors for a proposal numbered n with a value v, where v is the value of the highest-numbered proposal among the responses, or is any value if the responses reported no proposals.
 
-request to each of those acceptors for a proposal numbered n with a value v, where v is the value of the highest-numbered proposal among the responses, or is any value if the responses reported no proposals.
+\(b\) If an acceptor receives an accept request for a proposal numbered n, it accepts the proposal unless it has already responded to a prepare request having a number greater than n.
 
-\(b\) If an acceptor receives an accept request for a proposal numbered n, it accepts the proposal unless it has already responded to a prepare request having a number greater than n. 
-
-A proposer can make multiple proposals, so long as it follows the algorithm for each one. It can abandon a proposal in the middle of the protocol at any time. \(Correctness is maintained, even though requests and/or responses for the proposal may arrive at their destinations long after the proposal was abandoned.\) It is probably a good idea to abandon a proposal if some proposer has begun trying to issue a higher-numbered one. Therefore, if an acceptor ignores a prepare or accept request because it has already received a prepare request with a higher number, then it should probably inform the proposer, who should then abandon its proposal. This is a performance optimization that does not affect correctness.
+A proposer can make multiple proposals, so long as it follows the algorithm for each one. It can abandon a proposal in the middle of the protocol at any time. \(Correctness is maintained, even though requests and/or responses for the proposal may arrive at their destinations long after the proposal was abandoned.\) It is probably a good idea to abandon a proposal if some  
+ proposer has begun trying to issue a higher-numbered one. Therefore, if an acceptor ignores a prepare or accept request because it has already received a prepare request with a higher number, then it should probably inform the proposer, who should then abandon its proposal. This is a performance optimization that does not affect correctness.
 
 ### 2.3 Learning a Chosen Value
 
-To learn that a value has been chosen, a learner must find out that a proposal has been accepted by a majority of acceptors. The obvious algorithm is to have each acceptor, whenever it accepts a proposal, respond to all learners, sending them the proposal. This allows learners to find out about a chosen value as soon as possible, but it requires each acceptor to respond to each learner—a number of responses equal to the product of the number of acceptors and the number of learners.
+To learn that a value has been chosen, a learner must find out that a pro  
+posal has been accepted by a majority of acceptors. The obvious algorithm  
+ is to have each acceptor, whenever it accepts a proposal, respond to all  
+ learners, sending them the proposal. This allows learners to find out about  
+ a chosen value as soon as possible, but it requires each acceptor to respond  
+ to each learner—a number of responses equal to the product of the number  
+ of acceptors and the number of learners.
 
-The assumption of non-Byzantine failures makes it easy for one learner to find out from another learner that a value has been accepted. We can have the acceptors respond with their acceptances to a distinguished learner, which in turn informs the other learners when a value has been chosen. This approach requires an extra round for all the learners to discover the chosen value. It is also less reliable, since the distinguished learner could fail. But it requires a number of responses equal only to the sum of the number of acceptors and the number of learners.
+The assumption of non-Byzantine failures makes it easy for one learner  
+ to find out from another learner that a value has been accepted. We can  
+ have the acceptors respond with their acceptances to a distinguished learner,  
+ which in turn informs the other learners when a value has been chosen. This  
+ approach requires an extra round for all the learners to discover the chosen  
+ value. It is also less reliable, since the distinguished learner could fail. But  
+ it requires a number of responses equal only to the sum of the number of  
+ acceptors and the number of learners.
 
-More generally, the acceptors could respond with their acceptances to some set of distinguished learners, each of which can then inform all the learners when a value has been chosen. Using a larger set of distinguished learners provides greater reliability at the cost of greater communication complexity.
+More generally, the acceptors could respond with their acceptances to  
+ some set of distinguished learners, each of which can then inform all the  
+ learners when a value has been chosen. Using a larger set of distinguished learners provides greater reliability at the cost of greater communication  
+ complexity.
 
-Because of message loss, a value could be chosen with no learner ever finding out. The learner could ask the acceptors what proposals they have accepted, but failure of an acceptor could make it impossible to know whether or not a majority had accepted a particular proposal. In that case, learners will find out what value is chosen only when a new proposal is chosen. If a learner needs to know whether a value has been chosen, it can have a proposer issue a proposal, using the algorithm described above.
+Because of message loss, a value could be chosen with no learner ever  
+ finding out. The learner could ask the acceptors what proposals they have  
+ accepted, but failure of an acceptor could make it impossible to know whether or not a majority had accepted a particular proposal. In that case, learners  
+ will find out what value is chosen only when a new proposal is chosen. If  
+ a learner needs to know whether a value has been chosen, it can have a  
+ proposer issue a proposal, using the algorithm described above.
 
 > 该协议要求：P2C中acceptor每次accept一个新的提案{n,v}，则该提案需要被落盘。由此保证P2C得以正确进行下去
 >
 > 假设有n个节点参与了paxos协议，在网络通信正常、节点工作正常情况下。
 >
 > 在Learn选定值时，作者的想法是：
-
+>
 > a\) 可以在每次accept一个提案时，通知所有的learner：
+>
 > * 每个acceptor在accept一个提案时广播到所有learner，由此带来的网络消息总数为n\*n
 > * accept的提案不一定是chosen的提案，如果经历了m次accept才最终hosen一个提案，那么网络消息总数为m\*n\*n
 > * chosen value确认：超过半数的acceptor向learner发来了相同的accepted value，该accepted value即为chosen value
 >
->  b\) 每次accpet一个提案时，通知到一个主leanrer，
+>   b\) 每次accpet一个提案时，通知到一个主leanrer，
+>
 > * chosen value确认：超过半数的acceptor向主learner发来了相同的accepted value，该accepted value即为chosen value
 > * 主learner异常导致其他Learner学不到chosen值
 >
-> c\) 每次accept一个提案时，通知到K个主learner
+> c\) 每次accept一个提案时，通知到K个主learner  
 > d\) learner主动向所有的acceptor发起learn请求，习得chosen值，但由于acceptor中持久化的值仅仅保证是accepted值，并不一定是chosen值，因此，这里需要由learner充当proposal发起一次提案，用于习得chosen值
 >
 > 上述4中方案均满足paxos开篇三原则中的第三条：
@@ -197,7 +219,7 @@ Because of message loss, a value could be chosen with no learner ever finding o
 > 按我的理解，作者讲述的learner习得过程虽然可以达到learner的效果，但是并不是非常好
 >
 > * learner应该直接接收chosen value，而不是每次接收所有的accepted value，并自行再做一次chosen value确定。
-> *
+>   \*
 
 
 
