@@ -211,17 +211,55 @@ Because of message loss, a value could be chosen with no learner ever finding ou
 
 ### 2.4 Progress
 
-It’s easy to construct a scenario in which two proposers each keep issuing a sequence of proposals with increasing numbers, none of which are ever chosen. Proposer p completes phase 1 for a proposal number n1. Another proposer q then completes phase 1 for a proposal number n2 &gt; n1. Proposer p’s phase 2 accept requests for a proposal numbered n1 are ignored because the acceptors have all promised not to accept any new proposal numbered less than n2. So, proposer p then begins and completes phase 1 for a new proposal number n3 &gt; n2, causing the second phase 2 accept requests of proposer q to be ignored. And so on.
+It’s easy to construct a scenario in which two proposers each keep issuing  
+ a sequence of proposals with increasing numbers, none of which are ever  
+ chosen. Proposer p completes phase 1 for a proposal number n1. Another  
+ proposer q then completes phase 1 for a proposal number n2 &gt; n1. Proposer  
+ p’s phase 2 accept requests for a proposal numbered n1 are ignored because the acceptors have all promised not to accept any new proposal numbered  
+ less than n2. So, proposer p then begins and completes phase 1 for a new  
+ proposal number n3 &gt; n2, causing the second phase 2 accept requests of  
+ proposer q to be ignored. And so on.
 
-To guarantee progress, a distinguished proposer must be selected as the only one to try issuing proposals. If the distinguished proposer can communicate successfully with a majority of acceptors, and if it uses a proposal with number greater than any already used, then it will succeed in issuing aproposal that is accepted. By abandoning a proposal and trying again if it learns about some request with a higher proposal number, the distinguished proposer will eventually choose a high enough proposal number.
+To guarantee progress, a distinguished proposer must be selected as the  
+ only one to try issuing proposals. If the distinguished proposer can com  
+municate successfully with a majority of acceptors, and if it uses a proposal  
+ with number greater than any already used, then it will succeed in issuing a  
+proposal that is accepted. By abandoning a proposal and trying again if it  
+ learns about some request with a higher proposal number, the distinguished  
+ proposer will eventually choose a high enough proposal number.
 
-If enough of the system \(proposer, acceptors, and communication network\) is working properly, liveness can therefore be achieved by electing a single distinguished proposer. The famous result of Fischer, Lynch, and Patterson \[1\] implies that a reliable algorithm for electing a proposer must use either randomness or real time—for example, by using timeouts. However, safety is ensured regardless of the success or failure of the election.
+If enough of the system \(proposer, acceptors, and communication net  
+work\) is working properly, liveness can therefore be achieved by electing a  
+ single distinguished proposer. The famous result of Fischer, Lynch, and Pat  
+terson \[1\] implies that a reliable algorithm for electing a proposer must use  
+ either randomness or real time—for example, by using timeouts. However,  
+ safety is ensured regardless of the success or failure of the election.
 
 > 这里讲到一种可能导致paxos陷入死循环的场景，并提出了一种简单的解决方案：选择一个主proposer，所有的提议由主proposer发起
 
 ### 2.5 The Implementation
 
-The Paxos algorithm \[5\] assumes a network of processes. In its consensus algorithm, each process plays the role of proposer, acceptor, and learner. The algorithm chooses a leader, which plays the roles of the distinguished 
+The Paxos algorithm \[5\] assumes a network of processes. In its consensus algorithm, each process plays the role of proposer, acceptor, and learner. The algorithm chooses a leader, which plays the roles of the distinguished proposer and the distinguished learner. 
 
+> 创建一组通过网络通信的进程，每个进程同时扮演了proposer、acceptor、learner，在这些进程中选择一个主进程，做为主proposer和主learner。
 
+The Paxos consensus algorithm is precisely the one described above, where requests and responses are sent as ordinary messages. \(Response messages are tagged with the corresponding proposal number to prevent confusion.\) Stable storage, preserved during failures, is used to maintain the information that the acceptor must re
+
+member. An acceptor records its intended response in stable storage before
+
+actually sending the response.
+
+All that remains is to describe the mechanism for guaranteeing that no
+
+two proposals are ever issued with the same number. Different proposers
+
+choose their numbers from disjoint sets of numbers, so two different pro
+
+posers never issue a proposal with the same number. Each proposer remem
+
+bers \(in stable storage\) the highest-numbered proposal it has tried to issue,
+
+and begins phase 1 with a higher proposal number than any it has already
+
+used.
 
