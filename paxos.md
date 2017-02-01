@@ -207,7 +207,7 @@ Because of message loss, a value could be chosen with no learner ever finding ou
 > 按我的理解，作者讲述的learner习得过程虽然可以达到learner的效果，但是并不是非常好
 >
 > * learner应该直接接收chosen value，而不是每次接收所有的accepted value，并自行再做一次chosen value确定。
->   \*
+> * 一个值是否被chosen，最先是被proposer获知的，因此由proposer通知learner更合理
 
 
 
