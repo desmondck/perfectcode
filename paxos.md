@@ -243,19 +243,9 @@ The Paxos algorithm \[5\] assumes a network of processes. In its consensus algor
 
 > 创建一组通过网络通信的进程，每个进程同时扮演了proposer、acceptor、learner，在这些进程中选择一个主进程，做为主proposer和主learner。
 
-The Paxos consensus algorithm is precisely the one described above, where requests and responses are sent as ordinary messages. \(Response messages are tagged with the corresponding proposal number to prevent confusion.\) Stable storage, preserved during failures, is used to maintain the information that the acceptor must remember. An acceptor records its intended response in stable storage beforeactually sending the response.
+The Paxos consensus algorithm is precisely the one described above, where requests and responses are sent as ordinary messages. \(Response messages are tagged with the corresponding proposal number to prevent confusion.\) Stable storage, preserved during failures, is used to maintain the information that the acceptor must remember. **An acceptor records its intended response in stable storage beforeactually sending the response.**
 
-All that remains is to describe the mechanism for guaranteeing that no
+> acceptor在返回响应前必须做数据持久化，以免数据丢失。
 
-two proposals are ever issued with the same number. Different proposers
-
-choose their numbers from disjoint sets of numbers, so two different pro
-
-posers never issue a proposal with the same number. Each proposer remem
-
-bers \(in stable storage\) the highest-numbered proposal it has tried to issue,
-
-and begins phase 1 with a higher proposal number than any it has already
-
-used.
+All that remains is to describe the mechanism for guaranteeing that no two proposals are ever issued with the same number. Different proposers choose their numbers from disjoint sets of numbers, so two different proposers never issue a proposal with the same number. Each proposer remembers \(in stable storage\) the highest-numbered proposal it has tried to issue, and begins phase 1 with a higher proposal number than any it has already used.
 
