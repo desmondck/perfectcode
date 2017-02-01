@@ -249,3 +249,7 @@ The Paxos consensus algorithm is precisely the one described above, where reques
 
 All that remains is to describe the mechanism for guaranteeing that no two proposals are ever issued with the same number. Different proposers choose their numbers from disjoint sets of numbers, so two different proposers never issue a proposal with the same number. Each proposer remembers \(in stable storage\) the highest-numbered proposal it has tried to issue, and begins phase 1 with a higher proposal number than any it has already used.
 
+> 通过算法保证每台机器之间编号唯一且严格递增
+
+
+
