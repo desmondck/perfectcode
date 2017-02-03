@@ -260,13 +260,38 @@ The new leader, being a learner in all instances of the consensus algorithm, sho
  executes phase 1 of instances 135–137 and of all instances greater than 139.\(I describe below how this is done.\) Suppose that the outcome of these executions determine the value to be proposed in instances 135 and 140, but leaves the proposed value unconstrained in all other instances. The leader then executes phase 2 for instances 135 and 140, thereby choosing commands  
  135 and 140.
 
+> 135-137，139以上执行阶段1，其中135，140正确返回，进而执行阶段2确定135，140两个值。
+
 The leader, as well as any other server that learns all the commands the leader knows, can now execute commands 1–135. However, it can’t execute commands 138–140, which it also knows, because commands 136 and 137 have yet to be chosen. The leader could take the next two commands requested by clients to be commands 136 and 137. Instead, we let it fill the gap immediately by proposing, as commands 136 and 137, a special “noop” command that leaves the state unchanged. \(It does this by executing phase 2 of instances 136 and 137 of the consensus algorithm.\) Once these no-op commands have been chosen, commands 138–140 can be executed.
 
-Commands 1–140 have now been chosen. The leader has also completed phase 1 for all instances greater than 140 of the consensus algorithm, and it is free to propose any value in phase 2 of those instances. It assigns command number 141 to the next command requested by a client, proposing it as the value in phase 2 of instance 141 of the consensus algorithm. It proposes the next client command it receives as command 142, and so on.
+Commands 1–140 have now been chosen. The leader has also completed  
+ phase 1 for all instances greater than 140 of the consensus algorithm, and it  
+ is free to propose any value in phase 2 of those instances. It assigns command  
+ number 141 to the next command requested by a client, proposing it as the  
+ value in phase 2 of instance 141 of the consensus algorithm. It proposes the  
+ next client command it receives as command 142, and so on.
 
-The leader can propose command 142 before it learns that its proposed command 141 has been chosen. It’s possible for all the messages it sent in proposing command 141 to be lost, and for command 142 to be chosen before any other server has learned what the leader proposed as command 141. When the leader fails to receive the expected response to its phase 2 messages in instance 141, it will retransmit those messages. If all goes well, its proposed command will be chosen. However, it could fail first, leaving a gap in the sequence of chosen commands. In general, suppose a leader can get α commands ahead—that is, it can propose commands i + 1 through i +α after commands 1 through i are chosen. A gap of up to α−1 commands could then arise.
+The leader can propose command 142 before it learns that its proposed  
+ command 141 has been chosen. It’s possible for all the messages it sent  
+ in proposing command 141 to be lost, and for command 142 to be chosen  
+ before any other server has learned what the leader proposed as command  
+ 141. When the leader fails to receive the expected response to its phase 2  
+ messages in instance 141, it will retransmit those messages. If all goes well,  
+ its proposed command will be chosen. However, it could fail first, leaving a  
+ gap in the sequence of chosen commands. In general, suppose a leader can  
+ get α commands ahead—that is, it can propose commands i + 1 through  
+ i +α after commands 1 through i are chosen. A gap of up to α−1 commands  
+ could then arise.
 
-A newly chosen leader executes phase 1 for infinitely many instances of the consensus algorithm—in the scenario above, for instances 135–137 and all instances greater than 139. Using the same proposal number for all instances, it can do this by sending a single reasonably short message to the other servers. In phase 1, an acceptor responds with more than a simple OK only if it has already received a phase 2 message from some proposer. \(In the scenario, this was the case only for instances 135 and 140.\) Thus, a server \(acting as acceptor\) can respond for all instances with a single reasonably short message. Executing these infinitely many instances
+A newly chosen leader executes phase 1 for infinitely many instances  
+ of the consensus algorithm—in the scenario above, for instances 135–137  
+ and all instances greater than 139. Using the same proposal number for  
+ all instances, it can do this by sending a single reasonably short message  
+ to the other servers. In phase 1, an acceptor responds with more than a  
+ simple OK only if it has already received a phase 2 message from some  
+ proposer. \(In the scenario, this was the case only for instances 135 and  
+ 140.\) Thus, a server \(acting as acceptor\) can respond for all instances with  
+ a single reasonably short message. Executing these infinitely many instances
 
 of phase 1 therefore poses no problem.
 
