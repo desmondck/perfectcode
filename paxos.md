@@ -276,19 +276,5 @@ for reaching agreement in the presence of faults \[2\]. Hence, the Paxos algorit
 
 This discussion of the normal operation of the system assumes that there is always a single leader, except for a brief period between the failure of the current leader and the election of a new one. In abnormal circumstances, the leader election might fail. If no server is acting as leader, then no new commands will be proposed. If multiple servers think they are leaders, then they can all propose values in the same instance of the consensus algorithm, which could prevent any value from being chosen. However, safety is preserved—two different servers will never disagree on the value chosen as the i th state machine command. Election of a single leader is needed only to ensure progress.
 
-If the set of servers can change, then there must be some way of determining what servers implement what instances of the consensus algorithm.
-
-The easiest way to do this is through the state machine itself. The current
-
-set of servers can be made part of the state and can be changed with ordi
-
-nary state-machine commands. We can allow a leader to get α commands
-
-ahead by letting the set of servers that execute instance i + α of the con
-
-sensus algorithm be specified by the state after execution of the i th state
-
-machine command. This permits a simple implementation of an arbitrarily
-
-sophisticated reconfiguration algorithm.
+If the set of servers can change, then there must be some way of determining what servers implement what instances of the consensus algorithm. The easiest way to do this is through the state machine itself. The current set of servers can be made part of the state and can be changed with ordinary state-machine commands. We can allow a leader to get α commands ahead by letting the set of servers that execute instance i + α of the consensus algorithm be specified by the state after execution of the i th state machine command. This permits a simple implementation of an arbitrarily sophisticated reconfiguration algorithm.
 
