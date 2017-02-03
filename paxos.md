@@ -234,5 +234,43 @@ All that remains is to describe the mechanism for guaranteeing that no two propo
 
 > 通过算法保证每台机器之间编号唯一且严格递增
 
+### 3 Implementing a State Machine
+
+A simple way to implement a distributed system is as a collection of clients that issue commands to a central server. The server can be described as a deterministic state machine that performs client commands in some sequence. The state machine has a current state; it performs a step by taking as input a command and producing an output and a new state. For example, the clients of a distributed banking system might be tellers, and the state-machine state might consist of the account balances of all users.
+
+A withdrawal would be performed by executing a state machine command that decreases an account’s balance if and only if the balance is greater than the amount withdrawn, producing as output the old and new balances.
+
+An implementation that uses a single central server fails if that server fails. We therefore instead use a collection of servers, each one independently implementing the state machine. Because the state machine is deterministic, all the servers will produce the same sequences of states and outputs if they all execute the same sequence of commands. A client issuing a command can then use the output generated for it by any server. 
+
+To guarantee that all servers execute the same sequence of state machine commands, we implement a sequence of separate instances of the Paxos consensus algorithm, the value chosen by the i th instance being the i th state machine command in the sequence. Each server plays all the roles \(proposer, acceptor, and learner\) in each instance of the algorithm. For now, I assume that the set of servers is fixed, so all instances of the consensus algorithm use the same sets of agents.
+
+In normal operation, a single server is elected to be the leader, which acts as the distinguished proposer \(the only one that tries to issue proposals\) in all instances of the consensus algorithm. Clients send commands to the leader, who decides where in the sequence each command should appear. If the leader decides that a certain client command should be the 135th command, it tries to have that command chosen as the value of the 135th instance of the consensus algorithm. It will usually succeed. It might fail because of failures, or because another server also believes itself to be the leader and has a different idea of what the 135th command should be. But the consensus algorithm ensures that at most one command can be chosen as the 135th one.
+
+> Paxos协议也建议选择一个leader节点，所有的提案都有leader发起，以此减少可能出现的提案冲突，进而提升性能。
+>
+> Paxos也采用了“主备”模式，那么它和典型的主备模式有何区别呢？
+>
+> **答**：Paxos中选举的主只是为了提升性能，在出现双主、甚至多主时依旧可以正常工作，并保证分布式系统的一致性
+
+Key to the efficiency of this approach is that, in the Paxos consensus algorithm, the value to be proposed is not chosen until phase 2. Recall that, after completing phase 1 of the proposer’s algorithm, either the value to be proposed is determined or else the proposer is free to propose any value.
+
+I will now describe how the Paxos state machine implementation works during normal operation. Later, I will discuss what can go wrong. I consider what happens when the previous leader has just failed and a new leader has been selected. \(System startup is a special case in which no commands have yet been proposed.\)
+
+The new leader, being a learner in all instances of the consensus algorithm, should know most of the commands that have already been chosen.Suppose it knows commands 1–134, 138, and 139—that is, the values chosen in instances 1–134, 138, and 139 of the consensus algorithm. \(We will see later how such a gap in the command sequence could arise.\) It then executes phase 1 of instances 135–137 and of all instances greater than 139.\(I describe below how this is done.\) Suppose that the outcome of these executions determine the value to be proposed in instances 135 and 140, but leaves the proposed value unconstrained in all other instances. The leader then executes phase 2 for instances 135 and 140, thereby choosing commands 135 and 140.
+
+The leader, as well as any other server that learns all the commands the leader knows, can now execute commands 1–135. However, it can’t
+
+execute commands 138–140, which it also knows, because commands 136
+
+and 137 have yet to be chosen. The leader could take the next two commands
+
+requested by clients to be commands 136 and 137. Instead, we let it fill the
+
+gap immediately by proposing, as commands 136 and 137, a special “no
+
+op” command that leaves the state unchanged. \(It does this by executing
+
+phase 2 of instances 136 and 137 of the consensus algorithm.\) Once these
+
 
 
