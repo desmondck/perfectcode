@@ -261,8 +261,14 @@ The new leader, being a learner in all instances of the consensus algorithm, sho
  135 and 140.
 
 > 135-137，139以上执行阶段1，其中135，140正确返回，进而执行阶段2确定135，140两个值。
+>
+> 注意：这里指的是139以上的全部commands，这是怎么做到的呢？请往后看
 
 The leader, as well as any other server that learns all the commands the leader knows, can now execute commands 1–135. However, it can’t execute commands 138–140, which it also knows, because commands 136 and 137 have yet to be chosen. The leader could take the next two commands requested by clients to be commands 136 and 137. Instead, we let it fill the gap immediately by proposing, as commands 136 and 137, a special “noop” command that leaves the state unchanged. \(It does this by executing phase 2 of instances 136 and 137 of the consensus algorithm.\) Once these no-op commands have been chosen, commands 138–140 can be executed.
+
+> 至此，140之前的value只有136和137未知，因此状态机无法执行至140，必须确定136，137的值。
+>
+> 这里采用了作者称之为noop方法，即只执行阶段2，将随之而来的两个客户端请求做为136，137的选定值。
 
 Commands 1–140 have now been chosen. The leader has also completed phase 1 for all instances greater than 140 of the consensus algorithm, and it is free to propose any value in phase 2 of those instances. It assigns command number 141 to the next command requested by a client, proposing it as the value in phase 2 of instance 141 of the consensus algorithm. It proposes the next client command it receives as command 142, and so on.
 
@@ -273,6 +279,18 @@ A newly chosen leader executes phase 1 for infinitely many instances of the cons
 Since failure of the leader and election of a new one should be rare events, the effective cost of executing a state machine command—that is, of achieving consensus on the command/value—is the cost of executing only phase 2 of the consensus algorithm. It can be shown that phase 2 of the Paxos consensus algorithm has the minimum possible cost of any algorithm
 
 for reaching agreement in the presence of faults \[2\]. Hence, the Paxos algorithm is essentially optimal.
+
+> 在前两章讲述的流程中，基于无主模式确定一个值的方法为：
+> 1. 执行1阶段的prepare动作，尝试选定一个提案
+> 2. 为该提案指定一个值
+>
+> 当前，我们已经为集群选定了一个主节点，并且只能由主节点发起一个提案。
+> 此时，提案不会再冲突，主节点选定的提案必然为最终的提案\(当然也不完全是这样，不然就不会存在gap\)。
+> 在单主模式下，确定一个值的方法为：
+>
+> 1. 只执行阶段2，确定一个值
+>
+> 在原主异常，选定新主时，为所有未确定的instance，采用一个特殊的命令执行一次1阶段，1阶段执行失败的instance（如135，140）将使用已有值做为chosen value。1阶段执行成功的instance采用单主模式执行阶段2
 
 This discussion of the normal operation of the system assumes that there is always a single leader, except for a brief period between the failure of the current leader and the election of a new one. In abnormal circumstances, the leader election might fail. If no server is acting as leader, then no new commands will be proposed. If multiple servers think they are leaders, then they can all propose values in the same instance of the consensus algorithm, which could prevent any value from being chosen. However, safety is preserved—two different servers will never disagree on the value chosen as the i th state machine command. Election of a single leader is needed only to ensure progress.
 
