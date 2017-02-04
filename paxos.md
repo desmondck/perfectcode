@@ -280,12 +280,12 @@ Since failure of the leader and election of a new one should be rare events, the
 
 for reaching agreement in the presence of faults \[2\]. Hence, the Paxos algorithm is essentially optimal.
 
-> 在前两章讲述的流程中，基于无主模式确定一个值的方法为：
-> 1. 执行1阶段的prepare动作，尝试选定一个提案
+> 在前两章讲述的流程中，基于无主模式确定一个值的方法为：  
+> 1. 执行1阶段的prepare动作，尝试选定一个提案  
 > 2. 为该提案指定一个值
 >
-> 当前，我们已经为集群选定了一个主节点，并且只能由主节点发起一个提案。
-> 此时，提案不会再冲突，主节点选定的提案必然为最终的提案\(当然也不完全是这样，不然就不会存在gap\)。
+> 当前，我们已经为集群选定了一个主节点，并且只能由主节点发起一个提案。  
+> 此时，提案不会再冲突，主节点选定的提案必然为最终的提案\(当然也不完全是这样，不然就不会存在gap\)。  
 > 在单主模式下，确定一个值的方法为：
 >
 > 1. 只执行阶段2，确定一个值
@@ -295,4 +295,8 @@ for reaching agreement in the presence of faults \[2\]. Hence, the Paxos algorit
 This discussion of the normal operation of the system assumes that there is always a single leader, except for a brief period between the failure of the current leader and the election of a new one. In abnormal circumstances, the leader election might fail. If no server is acting as leader, then no new commands will be proposed. If multiple servers think they are leaders, then they can all propose values in the same instance of the consensus algorithm, which could prevent any value from being chosen. However, safety is preserved—two different servers will never disagree on the value chosen as the i th state machine command. Election of a single leader is needed only to ensure progress.
 
 If the set of servers can change, then there must be some way of determining what servers implement what instances of the consensus algorithm. The easiest way to do this is through the state machine itself. The current set of servers can be made part of the state and can be changed with ordinary state-machine commands. We can allow a leader to get α commands ahead by letting the set of servers that execute instance i + α of the consensus algorithm be specified by the state after execution of the i th state machine command. This permits a simple implementation of an arbitrarily sophisticated reconfiguration algorithm.
+
+>
+
+
 
