@@ -33,11 +33,11 @@ Assume a collection of **processes** that can **propose** values. A consensus al
 >
 > 1. propose是由proposer执行的动作
 > 2. learn是由learner执行的动作
+>
+> 后面会看到，其实每个进程被设计成一个完整的paxos协议执行体，包括proposer、acceptor、learner等.
 
 We won’t try to specify precise liveness requirements. However, the goal is to ensure that some proposed value is eventually chosen and, if a value has been chosen, then a process can eventually learn the value.
 
-> 上面一直在讲一件事：
->
 > 当多个process发起多个提议时，paxos确保只有一个提议值（value）被选中（chosen），并且其他process可以习得（learn）这个选中值，从而确保多个process在最终达成一致
 
 We let the three roles in the consensus algorithm be performed by three classes of agents: **proposers**, **acceptors**, and **learners**. In an implementation, a single process may act as more than one agent, but the mapping from agents to processes does not concern us here. Assume that agents can communicate with one another by sending messages. We use the customary asynchronous, non-Byzantine model, in which:
@@ -162,9 +162,9 @@ Putting the actions of the proposer and acceptor together, we see that the algor
 A proposer can make multiple proposals, so long as it follows the algorithm for each one. It can abandon a proposal in the middle of the protocol at any time. \(Correctness is maintained, even though requests and/or responses for the proposal may arrive at their destinations long after the proposal was abandoned.\) It is probably a good idea to abandon a proposal if some  
  proposer has begun trying to issue a higher-numbered one. Therefore, if an acceptor ignores a prepare or accept request because it has already received a prepare request with a higher number, then it should probably inform the proposer, who should then abandon its proposal. This is a performance optimization that does not affect correctness.
 
-> 注意：本节讲述的是如何chosen一个值
+> 注意：本节讲述的是如何chosen一个value
 >
-> 之所以强调值，是因为proposal由number、value两部分组成，但我们只关心value，而不关心number，也不关心proposal
+> 之所以强调value，是因为proposal由number、value两部分组成，但我们只关心value，而不关心number，也不关心proposal
 >
 > 也就是说，我们可能提了多个不同的提案\(由不同的编号\)，最终chosen的提案也可能有多个，但chosen的value只有一个
 
@@ -274,6 +274,8 @@ Commands 1–140 have now been chosen. The leader has also completed phase 1 for
 
 The leader can propose command 142 before it learns that its proposed command 141 has been chosen. It’s possible for all the messages it sent in proposing command 141 to be lost, and for command 142 to be chosen before any other server has learned what the leader proposed as command 141. When the leader fails to receive the expected response to its phase 2 messages in instance 141, it will retransmit those messages. If all goes well, its proposed command will be chosen. However, it could fail first, leaving a gap in the sequence of chosen commands. In general, suppose a leader can get α commands ahead—that is, it can propose commands i + 1 through i +α after commands 1 through i are chosen. A gap of up to α−1 commands could then arise.
 
+> leader同时处理r个commond，应该是出于性能考虑在实现上做的一种优化
+
 A newly chosen leader executes phase 1 for infinitely many instances of the consensus algorithm—in the scenario above, for instances 135–137 and all instances greater than 139. Using the same proposal number for all instances, it can do this by sending a single reasonably short message to the other servers. In phase 1, an acceptor responds with more than a simple OK only if it has already received a phase 2 message from some proposer. \(In the scenario, this was the case only for instances 135 and 140.\) Thus, a server \(acting as acceptor\) can respond for all instances with a single reasonably short message. Executing these infinitely many instancesof phase 1 therefore poses no problem.
 
 Since failure of the leader and election of a new one should be rare events, the effective cost of executing a state machine command—that is, of achieving consensus on the command/value—is the cost of executing only phase 2 of the consensus algorithm. It can be shown that phase 2 of the Paxos consensus algorithm has the minimum possible cost of any algorithm
@@ -295,8 +297,6 @@ for reaching agreement in the presence of faults \[2\]. Hence, the Paxos algorit
 This discussion of the normal operation of the system assumes that there is always a single leader, except for a brief period between the failure of the current leader and the election of a new one. In abnormal circumstances, the leader election might fail. If no server is acting as leader, then no new commands will be proposed. If multiple servers think they are leaders, then they can all propose values in the same instance of the consensus algorithm, which could prevent any value from being chosen. However, safety is preserved—two different servers will never disagree on the value chosen as the i th state machine command. Election of a single leader is needed only to ensure progress.
 
 If the set of servers can change, then there must be some way of determining what servers implement what instances of the consensus algorithm. The easiest way to do this is through the state machine itself. The current set of servers can be made part of the state and can be changed with ordinary state-machine commands. We can allow a leader to get α commands ahead by letting the set of servers that execute instance i + α of the consensus algorithm be specified by the state after execution of the i th state machine command. This permits a simple implementation of an arbitrarily sophisticated reconfiguration algorithm.
-
->
 
 
 
