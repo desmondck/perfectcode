@@ -172,7 +172,7 @@ A proposer can make multiple proposals, so long as it follows the algorithm for 
 
 To learn that a value has been chosen, a learner must find out that a proposal has been accepted by a majority of acceptors. The obvious algorithm is to have each acceptor, whenever it accepts a proposal, respond to all learners, sending them the proposal. This allows learners to find out about a chosen value as soon as possible, but it requires each acceptor to respond to each learner—a number of responses equal to the product of the number of acceptors and the number of learners.
 
-The assumption of non-Byzantine failures makes it easy for one learner  to find out from another learner that a value has been accepted. We can have the acceptors respond with their acceptances to a distinguished learner, which in turn informs the other learners when a value has been chosen. This approach requires an extra round for all the learners to discover the chosen  
+The assumption of non-Byzantine failures makes it easy for one learner  to find out from another learner that a value has been accepted. We can have the acceptors respond with their acceptances to a distinguished learner, which in turn informs the other learners **when a value has been chosen**. This approach requires an extra round for all the learners to discover the chosen  
  value. It is also less reliable, since the distinguished learner could fail. But it requires a number of responses equal only to the sum of the number of acceptors and the number of learners.
 
 More generally, the acceptors could respond with their acceptances to some set of distinguished learners, each of which can then inform all the learners when a value has been chosen. Using a larger set of distinguished learners provides greater reliability at the cost of greater communication complexity.
@@ -192,7 +192,7 @@ Because of message loss, a value could be chosen with no learner ever finding ou
 > * accept的提案不一定是chosen的提案，如果经历了m次accept才最终hosen一个提案，那么网络消息总数为m\*n\*n
 > * chosen value确认：超过半数的acceptor向learner发来了相同的accepted value，该accepted value即为chosen value
 >
->   b\) 每次accpet一个提案时，通知到一个主leanrer，
+> b\) 每次accpet一个提案时，通知到一个主leanrer，
 >
 > * chosen value确认：超过半数的acceptor向主learner发来了相同的accepted value，该accepted value即为chosen value
 >
@@ -206,11 +206,6 @@ Because of message loss, a value could be chosen with no learner ever finding ou
 > • A **process** never **learns** that a value has been chosen unless it actually has been.
 >
 > **直到一个值确实被选中（chosen），process才可以习得（learn）这个被选中的值**
->
-> 按我的理解，作者讲述的learner习得过程虽然可以达到learner的效果，但是并不是非常好
->
-> * learner应该直接接收chosen value，而不是每次接收所有的accepted value，并自行再做一次chosen value确定。
-> * 一个值是否被chosen，最先是被proposer获知的，因此由proposer通知learner更合理
 
 ### 2.4 Progress
 
@@ -228,6 +223,12 @@ If enough of the system \(proposer, acceptors, and communication network\) is wo
 The Paxos algorithm \[5\] assumes a network of processes. In its consensus algorithm, each process plays the role of proposer, acceptor, and learner. The algorithm chooses a leader, which plays the roles of the distinguished proposer and the distinguished learner.
 
 > 创建一组通过网络通信的进程，每个进程同时扮演了proposer、acceptor、learner，在这些进程中选择一个主进程，做为主proposer和主learner。
+>
+> 主proposer前面已经介绍的很清楚了，关于主learner这里还要强调一下:
+>
+> 这个主learner指的就是2.3中learn三种方案的方案b
+>
+> 主proposer和主learner在一台机器上，而proposer和learner都需要知道chosen value，即被多数节点接受的值。这里就省去了proposer和learner由于放置不同节点导致的独立接收acceptor消息，独立判定chosen value的额外开销。
 
 The Paxos consensus algorithm is precisely the one described above, where requests and responses are sent as ordinary messages. \(Response messages are tagged with the corresponding proposal number to prevent confusion.\) Stable storage, preserved during failures, is used to maintain the information that the acceptor must remember. **An acceptor records its intended response in stable storage beforeactually sending the response.**
 
@@ -297,6 +298,24 @@ for reaching agreement in the presence of faults \[2\]. Hence, the Paxos algorit
 This discussion of the normal operation of the system assumes that there is always a single leader, except for a brief period between the failure of the current leader and the election of a new one. In abnormal circumstances, the leader election might fail. If no server is acting as leader, then no new commands will be proposed. If multiple servers think they are leaders, then they can all propose values in the same instance of the consensus algorithm, which could prevent any value from being chosen. However, safety is preserved—two different servers will never disagree on the value chosen as the i th state machine command. Election of a single leader is needed only to ensure progress.
 
 If the set of servers can change, then there must be some way of determining what servers implement what instances of the consensus algorithm. The easiest way to do this is through the state machine itself. The current set of servers can be made part of the state and can be changed with ordinary state-machine commands. We can allow a leader to get α commands ahead by letting the set of servers that execute instance i + α of the consensus algorithm be specified by the state after execution of the i th state machine command. This permits a simple implementation of an arbitrarily sophisticated reconfiguration algorithm.
+
+> 总结
+>
+> 1. Paxos在无主分布式系统中可以通过两阶段提案的方式唯一确定一个值
+> 2. 无主模式下，多个proposer发起多个提案的方式性能上不能满足生产级要求，因此需要选则主proposer提升性能
+> 3. learner习得也有多种方案，最简单、高效的方案是选择一个主learner，并且主learner和主proposer在一个进程内
+> 4. 出于性能考虑，允许一个leader同时执行n个command，最大可能出现的gap为n-1个
+> 5. paxos的一个instance用于确定一个值，多个独立的instance可以确定多个值，在值确定后，值的时序也被确定
+> 6. 由于gap的出现，值的时序可能和instance的id并非完全匹配，因此需要引入状态机以使得值+时序能被业务正确消费
+>
+> Paxos协议已被证明其正确性，作者本文除了阐述理论上的可行性外，还给出了工程实践上的诸多指引，如下：
+> 1. 一个进程由proposer、learner、acceptor组成，多个独立部署的进程共同组成了分布式系统的paxos协议服务
+> 2. 选择一个主进程，该进程同时做为主learner、主proposer\(其实，也是主acceptor，只是主acceptor当前并没有承担任何额外的职责\)。
+> 3. 主进程被选定时，执行一次全量的paxos协议（针对所有未确定值的instance），由此习得所有已确定的值
+> 4. 随后的proposer行为被简化了\(也可以认为所有的1阶段动作在选主时已经一次性做完了\)，后续确定一值只需要执行2阶段即可
+> 5. 在主proposer明确得知chosen value的同时，主learner也知道了这件事\(因为二者在同一个进程内\)。此时主learner便可以将chosen value通知到所有其他learner处
+> 6. 主proposer允许同时尝试确定n个值，但n个值中可能由于某些失败而产生gap，gap仅yunx 在i+1---i+n之中存在
+> 7. 为所有的instance指定一个或者一组状态机对象，当value被选定时，调用状态机由业务消费
 
 
 
