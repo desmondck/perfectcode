@@ -42,6 +42,7 @@ PhxPaxos整体架构如下：
   * instance负责掌控整个Paxos协议的运行，也包括对其他机制的调控。
 
 * **选主服务**
+
   * 用于确定Paxos的主节点。
 
 > 主节点不是必须的，但选主后仅由主节点发起服务可以有效的提升性能。
@@ -191,7 +192,7 @@ Proposer
 
         BroadcastMessage ( oPaxosMsg );
     }
-    
+
     //来自各个Acceptor的响应消息
     void Proposer :: OnPrepareReply ( const PaxosMsg & oPaxosMsg )
     {
@@ -220,32 +221,39 @@ Proposer
 
         //记录已收到来自node id节点的响应
         m_oMsgCounter.AddReceive ( oPaxosMsg.nodeid() );
-        
-        //提案
+
+        //提案被接受
         if ( oPaxosMsg.rejectbypromiseid() == 0 )
         {
             BallotNumber oBallot ( oPaxosMsg.preacceptid(), oPaxosMsg.preacceptnodeid() );
             PLGDebug ( "[Promise] PreAcceptedID %lu PreAcceptedNodeID %lu ValueSize %zu",
                        oPaxosMsg.preacceptid(), oPaxosMsg.preacceptnodeid(), oPaxosMsg.value().size() );
+            //记录接受提案的node id
             m_oMsgCounter.AddPromiseOrAccept ( oPaxosMsg.nodeid() );
+            //记录接受提案节点返回的提案值
             m_oProposerState.AddPreAcceptValue ( oBallot, oPaxosMsg.value() );
         }
-        else
+        else    //提案被拒绝
         {
             PLGDebug ( "[Reject] RejectByPromiseID %lu", oPaxosMsg.rejectbypromiseid() );
+            //记录拒绝提案的node id
             m_oMsgCounter.AddReject ( oPaxosMsg.nodeid() );
             m_bWasRejectBySomeone = true;
+            //记录拒绝提案节点返回的Proposal ID，以便下次基于此信息重新发起提案
             m_oProposerState.SetOtherProposalID ( oPaxosMsg.rejectbypromiseid() );
         }
 
+        //超过半数接受该提案，提案通过
         if ( m_oMsgCounter.IsPassedOnThisRound() )
         {
             int iUseTimeMs = m_oTimeStat.Point();
             BP->GetProposerBP()->PreparePass ( iUseTimeMs );
             PLGImp ( "[Pass] start accept, usetime %dms", iUseTimeMs );
+            //注意：这里做了一个优化，一旦Prepare阶段的提案被通过后，就自动跳过Prepare阶段，以减少网络传输落盘次数
             m_bCanSkipPrepare = true;
             Accept();
         }
+        //超过半数拒绝该提案，或提案已全部响应，但并未超过半数通过(如4个节点，两个接受、两个拒绝)
         else if ( m_oMsgCounter.IsRejectedOnThisRound()
                   || m_oMsgCounter.IsAllReceiveOnThisRound() )
         {
@@ -256,7 +264,6 @@ Proposer
 
         PLGHead ( "END" );
     }
-
 ```
 
 ## 质量属性
