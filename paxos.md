@@ -308,13 +308,13 @@ If the set of servers can change, then there must be some way of determining wha
 > 5. paxos的一个instance用于确定一个值，多个独立的instance可以确定多个值，在值确定后，值的时序也被确定
 > 6. 由于gap的出现，值的时序可能和instance的id并非完全匹配，因此需要引入状态机以使得值+时序能被业务正确消费
 >
-> Paxos协议已被证明其正确性，作者本文除了阐述理论上的可行性外，还给出了工程实践上的诸多指引，如下：
-> 1. 一个进程由proposer、learner、acceptor组成，多个独立部署的进程共同组成了分布式系统的paxos协议服务
-> 2. 选择一个主进程，该进程同时做为主learner、主proposer\(其实，也是主acceptor，只是主acceptor当前并没有承担任何额外的职责\)。
-> 3. 主进程被选定时，执行一次全量的paxos协议（针对所有未确定值的instance），由此习得所有已确定的值
-> 4. 随后的proposer行为被简化了\(也可以认为所有的1阶段动作在选主时已经一次性做完了\)，后续确定一值只需要执行2阶段即可
-> 5. 在主proposer明确得知chosen value的同时，主learner也知道了这件事\(因为二者在同一个进程内\)。此时主learner便可以将chosen value通知到所有其他learner处
-> 6. 主proposer允许同时尝试确定n个值，但n个值中可能由于某些失败而产生gap，gap仅yunx 在i+1---i+n之中存在
+> Paxos协议已被证明其正确性，作者本文除了阐述理论上的可行性外，还给出了工程实践上的诸多指引，如下：  
+> 1. 一个进程由proposer、learner、acceptor组成，多个独立部署的进程共同组成了分布式系统的paxos协议服务  
+> 2. 选择一个主进程，该进程同时做为主learner、主proposer\(其实，也是主acceptor，只是主acceptor当前并没有承担任何额外的职责\)。  
+> 3. 主进程被选定时，执行一次全量的paxos协议（针对所有未确定值的instance），由此习得所有已确定的值  
+> 4. 随后的proposer行为被简化了\(也可以认为所有的1阶段动作在选主时已经一次性做完了\)，后续确定一值只需要执行2阶段即可  
+> 5. 在主proposer明确得知chosen value的同时，主learner也知道了这件事\(因为二者在同一个进程内\)。此时主learner便可以将chosen value通知到所有其他learner处  
+> 6. 主proposer允许同时尝试确定n个值，但n个值中可能由于某些失败而产生gap，gap仅yunx 在i+1---i+n之中存在  
 > 7. 为所有的instance指定一个或者一组状态机对象，当value被选定时，调用状态机由业务消费
 
 
