@@ -451,6 +451,7 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
         return 0;
     }
 
+    //
     void Acceptor :: OnAccept ( const PaxosMsg & oPaxosMsg )
     {
         PLGHead ( "START Msg.InstanceID %lu Msg.from_nodeid %lu Msg.ProposalID %lu Msg.ValueLen %zu",
@@ -466,6 +467,7 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
         BallotNumber oBallot ( oPaxosMsg.proposalid(), oPaxosMsg.nodeid() );
 
+        //新提案编号 >= 当前已接受的提案编号；接受此提案
         if ( oBallot >= m_oAcceptorState.GetPromiseBallot() )
         {
             PLGDebug ( "[Promise] State.PromiseID %lu State.PromiseNodeID %lu "
@@ -493,7 +495,7 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
             BP->GetAcceptorBP()->OnAcceptPass();
         }
-        else
+        else        //已有更新的提案，拒绝此提案
         {
             BP->GetAcceptorBP()->OnAcceptReject();
 
@@ -511,6 +513,15 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
         SendMessage ( iReplyNodeID, oReplyPaxosMsg );
     }
+    
+```
+
+**Learner**
+
+Learner定时发送当前的Instance Id，尝试习得自该Instance Id后的值，处理逻辑如下：
+
+```
+
 ```
 
 ## 质量属性
