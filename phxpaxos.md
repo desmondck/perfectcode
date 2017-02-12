@@ -119,7 +119,7 @@ PhxPaxos的数据存储抽象接口为LogStorage，内置实现类为MultiDataba
 
 Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实现完全基于《Paxos made simple》，实现上也并不复杂，来看代码实现：
 
-Proposer
+**Proposer**
 
 ```cpp
     //发起提案的入口函数
@@ -259,7 +259,106 @@ Proposer
         {
             BP->GetProposerBP()->PrepareNotPass();
             PLGImp ( "[Not Pass] wait 30ms and restart prepare" );
+            //设置定时器，并在10-40ms之后重新发起提案
             AddPrepareTimer ( OtherUtils::FastRand() % 30 + 10 );
+        }
+
+        PLGHead ( "END" );
+    }
+    
+    
+```
+
+```cpp
+    //Accept阶段
+    void Proposer :: Accept()
+    {
+        PLGHead ( "START ProposalID %lu ValueSize %zu ValueLen %zu",
+                  m_oProposerState.GetProposalID(), m_oProposerState.GetValue().size(), m_oProposerState.GetValue().size() );
+
+        BP->GetProposerBP()->Accept();
+        m_oTimeStat.Point();
+
+        //并发控制，标记当前已进入Accept阶段 -- 无锁化
+        ExitPrepare();
+        m_bIsAccepting = true;
+
+        PaxosMsg oPaxosMsg;
+        oPaxosMsg.set_msgtype ( MsgType_PaxosAccept );
+        oPaxosMsg.set_instanceid ( GetInstanceID() );
+        oPaxosMsg.set_nodeid ( m_poConfig->GetMyNodeID() );
+        oPaxosMsg.set_proposalid ( m_oProposerState.GetProposalID() );
+        oPaxosMsg.set_value ( m_oProposerState.GetValue() );
+        oPaxosMsg.set_lastchecksum ( GetLastChecksum() );
+
+        m_oMsgCounter.StartNewRound();
+
+        //添加定时器、用于Accept超时后重新进入Prepare阶段
+        AddAcceptTimer();
+
+        PLGHead ( "END" );
+
+        //发送消息到其他节点
+        BroadcastMessage ( oPaxosMsg, BroadcastMessage_Type_RunSelf_Final );
+    }
+
+    //Accept阶段响应
+    void Proposer :: OnAcceptReply ( const PaxosMsg & oPaxosMsg )
+    {
+        PLGHead ( "START Msg.ProposalID %lu State.ProposalID %lu Msg.from_nodeid %lu RejectByPromiseID %lu",
+                  oPaxosMsg.proposalid(), m_oProposerState.GetProposalID(),
+                  oPaxosMsg.nodeid(), oPaxosMsg.rejectbypromiseid() );
+
+        BP->GetProposerBP()->OnAcceptReply();
+
+        //当前已不在Accept阶段
+        //1. 某个节点响应过慢，提案已完成
+        //2. 整个提案响应过慢，提案已重新进入Prepare阶段阶段
+        if ( !m_bIsAccepting )
+        {
+            //PLGErr("Not proposing, skip this msg");
+            BP->GetProposerBP()->OnAcceptReplyButNotAccepting();
+            return;
+        }
+
+        if ( oPaxosMsg.proposalid() != m_oProposerState.GetProposalID() )
+        {
+            //PLGErr("ProposalID not same, skip this msg");
+            BP->GetProposerBP()->OnAcceptReplyNotSameProposalIDMsg();
+            return;
+        }
+
+        m_oMsgCounter.AddReceive ( oPaxosMsg.nodeid() );
+
+        if ( oPaxosMsg.rejectbypromiseid() == 0 )
+        {
+            PLGDebug ( "[Accept]" );
+            m_oMsgCounter.AddPromiseOrAccept ( oPaxosMsg.nodeid() );
+        }
+        else
+        {
+            PLGDebug ( "[Reject]" );
+            m_oMsgCounter.AddReject ( oPaxosMsg.nodeid() );
+
+            m_bWasRejectBySomeone = true;
+
+            m_oProposerState.SetOtherProposalID ( oPaxosMsg.rejectbypromiseid() );
+        }
+
+        if ( m_oMsgCounter.IsPassedOnThisRound() )
+        {
+            int iUseTimeMs = m_oTimeStat.Point();
+            BP->GetProposerBP()->AcceptPass ( iUseTimeMs );
+            PLGImp ( "[Pass] Start send learn, usetime %dms", iUseTimeMs );
+            ExitAccept();
+            m_poLearner->ProposerSendSuccess ( GetInstanceID(), m_oProposerState.GetProposalID() );
+        }
+        else if ( m_oMsgCounter.IsRejectedOnThisRound()
+                  || m_oMsgCounter.IsAllReceiveOnThisRound() )
+        {
+            BP->GetProposerBP()->AcceptNotPass();
+            PLGImp ( "[Not pass] wait 30ms and Restart prepare" );
+            AddAcceptTimer ( OtherUtils::FastRand() % 30 + 10 );
         }
 
         PLGHead ( "END" );
