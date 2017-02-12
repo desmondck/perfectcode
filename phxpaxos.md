@@ -513,15 +513,68 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
         SendMessage ( iReplyNodeID, oReplyPaxosMsg );
     }
-    
 ```
 
 **Learner**
 
 Learner定时发送当前的Instance Id，尝试习得自该Instance Id后的值，处理逻辑如下：
 
-```
+```cpp
+    void Learner :: OnAskforLearn ( const PaxosMsg & oPaxosMsg )
+    {
+        BP->GetLearnerBP()->OnAskforLearn();
 
+        PLGHead ( "START Msg.InstanceID %lu Now.InstanceID %lu Msg.from_nodeid %lu MinChosenInstanceID %lu",
+                  oPaxosMsg.instanceid(), GetInstanceID(), oPaxosMsg.nodeid(),
+                  m_poCheckpointMgr->GetMinChosenInstanceID() );
+
+        SetSeenInstanceID ( oPaxosMsg.instanceid(), oPaxosMsg.nodeid() );
+
+        //发现一个新的Follower 
+        if ( oPaxosMsg.proposalnodeid() == m_poConfig->GetMyNodeID() )
+        {
+            //Found a node follow me.
+            PLImp ( "Found a node %lu follow me.", oPaxosMsg.nodeid() );
+            m_poConfig->AddFollowerNode ( oPaxosMsg.nodeid() );
+        }
+
+        //需要习得的Instance Id比本节点的更新，无法从本节点习得，直接返回
+        if ( oPaxosMsg.instanceid() >= GetInstanceID() )
+        {
+            return;
+        }
+
+        //需要习得的Instance Id尚未被归档(Checkpoint)，可以从本节点习得
+        if ( oPaxosMsg.instanceid() >= m_poCheckpointMgr->GetMinChosenInstanceID() )
+        {
+            //向Learner
+            if ( !m_oLearnerSender.Prepare ( oPaxosMsg.instanceid(), oPaxosMsg.nodeid() ) )
+            {
+                BP->GetLearnerBP()->OnAskforLearnGetLockFail();
+
+                PLGErr ( "LearnerSender working for others." );
+
+                if ( oPaxosMsg.instanceid() == ( GetInstanceID() - 1 ) )
+                {
+                    PLGImp ( "InstanceID only difference one, just send this value to other." );
+                    //send one value
+                    AcceptorStateData oState;
+                    int ret = m_oPaxosLog.ReadState ( m_poConfig->GetMyGroupIdx(), oPaxosMsg.instanceid(), oState );
+
+                    if ( ret == 0 )
+                    {
+                        BallotNumber oBallot ( oState.acceptedid(), oState.acceptednodeid() );
+                        SendLearnValue ( oPaxosMsg.nodeid(), oPaxosMsg.instanceid(), oBallot, oState.acceptedvalue(), 0, false );
+                    }
+                }
+
+                return;
+            }
+        }
+
+        //已经归档，发送本节点当前的Instance Id信息，交由Learner的发起者决定是否决定是否做做归档数据对齐
+        SendNowInstanceID ( oPaxosMsg.instanceid(), oPaxosMsg.nodeid() );
+    }
 ```
 
 ## 质量属性
