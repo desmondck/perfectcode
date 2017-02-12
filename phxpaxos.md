@@ -28,10 +28,13 @@ PhxPaxos整体架构如下：
 一个Node对应一个物理节点，如果需要正确的运行Paxos协议，必须由以下部分组成：
 
 * **网络模块**
+
   * 负责节点间网络通信。
 
 * **数据存储**
+
   * 负责记录确定的有序值。
+
 * **Paxos分组**
   * 上一节提到的一个Node同时运行多个Group的能力。
   * 在实现上，Node维护了一个Group的列表，每个Group中包含一个Instance对象
@@ -68,7 +71,7 @@ CheckpointMgr
 * 镜像数据管理者。
 * 指引业务生成镜像数据，一旦指定instance id之前的镜像数据产生，理论上就可以移除该instance id之前的Paxos Log数据，以免空间的无限扩展。这部分可以参加《微信自研生产级paxos类库PhxPaxos实现原理介绍》、《状态机Checkpoint详解》。
 
-图3
+图390
 
 ## 实现分析
 
@@ -91,6 +94,7 @@ PhxPaxos中网络接口抽象为NetWork，内置实现类为DFNetWrok，支持UD
   * EventLoop负责将TcpAcceptor中的请求转换为MessageEvent，并等待TcpClient发送消息
   * EventLoop负责接收来自不同TcpClient的消息，并通知Instance处理\(根据消息中的group id找到正确的group\)
 * **TcpWrite**
+
   * 启动EventLoop
   * TcpClient负责接收所有Instance发送的TCP消息，预先放入消息队列，并通知EventLoop立即处理\(通过Pipe通信通知\)
   * TcpClient将消息放入到消息队列前，首先建立和服务端基于TCP协议的Scoket通信
@@ -110,13 +114,87 @@ PhxPaxos的数据存储抽象接口为LogStorage，内置实现类为MultiDataba
 
 ### Paxos协议实现
 
+Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实现完全基于《Paxos made simple》，实现上也并不复杂，来看代码实现：
+
+Proposer
+
+```cpp
+    //发起提案的入口函数
+    int Proposer :: NewValue ( const std::string & sValue )
+    {
+        BP->GetProposerBP()->NewProposal ( sValue );
+
+        //记录本次的提案值
+        if ( m_oProposerState.GetValue().size() == 0 )
+        {
+            m_oProposerState.SetValue ( sValue );
+        }
+
+        m_iLastPrepareTimeoutMs = START_PREPARE_TIMEOUTMS;
+        m_iLastAcceptTimeoutMs = START_ACCEPT_TIMEOUTMS;
+
+        //允许跳过Prepare阶段，直接进入Accept
+        if ( m_bCanSkipPrepare && !m_bWasRejectBySomeone )
+        {
+            BP->GetProposerBP()->NewProposalSkipPrepare();
+
+            PLGHead ( "skip prepare, directly start accept" );
+            Accept();
+        }
+        else    //从Prepare阶段开始Paxos协议
+        {
+            //if not reject by someone, no need to increase ballot
+            Prepare ( m_bWasRejectBySomeone );
+        }
+
+        return 0;
+    }
+
+    //Prepare阶段
+    void Proposer :: Prepare ( const bool bNeedNewBallot )
+    {
+        PLGHead ( "START Now.InstanceID %lu MyNodeID %lu State.ProposalID %lu State.ValueLen %zu",
+                  GetInstanceID(), m_poConfig->GetMyNodeID(), m_oProposerState.GetProposalID(),
+                  m_oProposerState.GetValue().size() );
+
+        BP->GetProposerBP()->Prepare();
+        m_oTimeStat.Point();
+
+        ExitAccept();
+        m_bIsPreparing = true;
+        m_bCanSkipPrepare = false;
+        m_bWasRejectBySomeone = false;
+
+        m_oProposerState.ResetHighestOtherPreAcceptBallot();
+
+        //发起一个新提案
+        if ( bNeedNewBallot )
+        {
+            m_oProposerState.NewPrepare();
+        }
+
+        PaxosMsg oPaxosMsg;
+        oPaxosMsg.set_msgtype ( MsgType_PaxosPrepare );
+        oPaxosMsg.set_instanceid ( GetInstanceID() );
+        oPaxosMsg.set_nodeid ( m_poConfig->GetMyNodeID() );
+        oPaxosMsg.set_proposalid ( m_oProposerState.GetProposalID() );
+
+        m_oMsgCounter.StartNewRound();
+
+        AddPrepareTimer();
+
+        PLGHead ( "END OK" );
+
+        BroadcastMessage ( oPaxosMsg );
+    }
+
+```
+
 ## 质量属性
 
 ### 可靠性
 
 ### 性能
-
-
 
 
 
