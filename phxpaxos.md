@@ -265,8 +265,6 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
         PLGHead ( "END" );
     }
-    
-    
 ```
 
 ```cpp
