@@ -396,6 +396,7 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
         BallotNumber oBallot ( oPaxosMsg.proposalid(), oPaxosMsg.nodeid() );
 
+        //新提案编号 >= 当前已接受的提案编号；接受此提案
         if ( oBallot >= m_oAcceptorState.GetPromiseBallot() )
         {
             PLGDebug ( "[Promise] State.PromiseID %lu State.PromiseNodeID %lu "
@@ -408,6 +409,7 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
             oReplyPaxosMsg.set_preacceptid ( m_oAcceptorState.GetAcceptedBallot().m_llProposalID );
             oReplyPaxosMsg.set_preacceptnodeid ( m_oAcceptorState.GetAcceptedBallot().m_llNodeID );
 
+            //返回当前已接受的提案值
             if ( m_oAcceptorState.GetAcceptedBallot().m_llProposalID > 0 )
             {
                 oReplyPaxosMsg.set_value ( m_oAcceptorState.GetAcceptedValue() );
@@ -428,7 +430,7 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
             BP->GetAcceptorBP()->OnPreparePass();
         }
-        else
+        else    //已有更新的提案，拒绝此提案
         {
             BP->GetAcceptorBP()->OnPrepareReject();
 
