@@ -121,8 +121,6 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
 **Proposer**
 
->
-
 ```cpp
     //发起提案的入口函数
     int Proposer :: NewValue ( const std::string & sValue )
@@ -345,7 +343,7 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
         else    //提案被拒绝
         {
             PLGDebug ( "[Reject]" );
-            
+
             //记录拒绝提案的节点编号
             m_oMsgCounter.AddReject ( oPaxosMsg.nodeid() );
             //必须重新进入prepare阶段
@@ -377,9 +375,142 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
         PLGHead ( "END" );
     }
+    
 ```
 
+**Acceptor**
 
+```cpp
+    //
+    int Acceptor :: OnPrepare ( const PaxosMsg & oPaxosMsg )
+    {
+        PLGHead ( "START Msg.InstanceID %lu Msg.from_nodeid %lu Msg.ProposalID %lu",
+                  oPaxosMsg.instanceid(), oPaxosMsg.nodeid(), oPaxosMsg.proposalid() );
+
+        BP->GetAcceptorBP()->OnPrepare();
+
+        PaxosMsg oReplyPaxosMsg;
+        oReplyPaxosMsg.set_instanceid ( GetInstanceID() );
+        oReplyPaxosMsg.set_nodeid ( m_poConfig->GetMyNodeID() );
+        oReplyPaxosMsg.set_proposalid ( oPaxosMsg.proposalid() );
+        oReplyPaxosMsg.set_msgtype ( MsgType_PaxosPrepareReply );
+
+        BallotNumber oBallot ( oPaxosMsg.proposalid(), oPaxosMsg.nodeid() );
+
+        if ( oBallot >= m_oAcceptorState.GetPromiseBallot() )
+        {
+            PLGDebug ( "[Promise] State.PromiseID %lu State.PromiseNodeID %lu "
+                       "State.PreAcceptedID %lu State.PreAcceptedNodeID %lu",
+                       m_oAcceptorState.GetPromiseBallot().m_llProposalID,
+                       m_oAcceptorState.GetPromiseBallot().m_llNodeID,
+                       m_oAcceptorState.GetAcceptedBallot().m_llProposalID,
+                       m_oAcceptorState.GetAcceptedBallot().m_llNodeID );
+
+            oReplyPaxosMsg.set_preacceptid ( m_oAcceptorState.GetAcceptedBallot().m_llProposalID );
+            oReplyPaxosMsg.set_preacceptnodeid ( m_oAcceptorState.GetAcceptedBallot().m_llNodeID );
+
+            if ( m_oAcceptorState.GetAcceptedBallot().m_llProposalID > 0 )
+            {
+                oReplyPaxosMsg.set_value ( m_oAcceptorState.GetAcceptedValue() );
+            }
+
+            m_oAcceptorState.SetPromiseBallot ( oBallot );
+
+            int ret = m_oAcceptorState.Persist ( GetInstanceID(), GetLastChecksum() );
+
+            if ( ret != 0 )
+            {
+                BP->GetAcceptorBP()->OnPreparePersistFail();
+                PLGErr ( "Persist fail, Now.InstanceID %lu ret %d",
+                         GetInstanceID(), ret );
+
+                return -1;
+            }
+
+            BP->GetAcceptorBP()->OnPreparePass();
+        }
+        else
+        {
+            BP->GetAcceptorBP()->OnPrepareReject();
+
+            PLGDebug ( "[Reject] State.PromiseID %lu State.PromiseNodeID %lu",
+                       m_oAcceptorState.GetPromiseBallot().m_llProposalID,
+                       m_oAcceptorState.GetPromiseBallot().m_llNodeID );
+
+            oReplyPaxosMsg.set_rejectbypromiseid ( m_oAcceptorState.GetPromiseBallot().m_llProposalID );
+        }
+
+        nodeid_t iReplyNodeID = oPaxosMsg.nodeid();
+
+        PLGHead ( "END Now.InstanceID %lu ReplyNodeID %lu",
+                  GetInstanceID(), oPaxosMsg.nodeid() );;
+
+        SendMessage ( iReplyNodeID, oReplyPaxosMsg );
+
+        return 0;
+    }
+
+    void Acceptor :: OnAccept ( const PaxosMsg & oPaxosMsg )
+    {
+        PLGHead ( "START Msg.InstanceID %lu Msg.from_nodeid %lu Msg.ProposalID %lu Msg.ValueLen %zu",
+                  oPaxosMsg.instanceid(), oPaxosMsg.nodeid(), oPaxosMsg.proposalid(), oPaxosMsg.value().size() );
+
+        BP->GetAcceptorBP()->OnAccept();
+
+        PaxosMsg oReplyPaxosMsg;
+        oReplyPaxosMsg.set_instanceid ( GetInstanceID() );
+        oReplyPaxosMsg.set_nodeid ( m_poConfig->GetMyNodeID() );
+        oReplyPaxosMsg.set_proposalid ( oPaxosMsg.proposalid() );
+        oReplyPaxosMsg.set_msgtype ( MsgType_PaxosAcceptReply );
+
+        BallotNumber oBallot ( oPaxosMsg.proposalid(), oPaxosMsg.nodeid() );
+
+        if ( oBallot >= m_oAcceptorState.GetPromiseBallot() )
+        {
+            PLGDebug ( "[Promise] State.PromiseID %lu State.PromiseNodeID %lu "
+                       "State.PreAcceptedID %lu State.PreAcceptedNodeID %lu",
+                       m_oAcceptorState.GetPromiseBallot().m_llProposalID,
+                       m_oAcceptorState.GetPromiseBallot().m_llNodeID,
+                       m_oAcceptorState.GetAcceptedBallot().m_llProposalID,
+                       m_oAcceptorState.GetAcceptedBallot().m_llNodeID );
+
+            m_oAcceptorState.SetPromiseBallot ( oBallot );
+            m_oAcceptorState.SetAcceptedBallot ( oBallot );
+            m_oAcceptorState.SetAcceptedValue ( oPaxosMsg.value() );
+
+            int ret = m_oAcceptorState.Persist ( GetInstanceID(), GetLastChecksum() );
+
+            if ( ret != 0 )
+            {
+                BP->GetAcceptorBP()->OnAcceptPersistFail();
+
+                PLGErr ( "Persist fail, Now.InstanceID %lu ret %d",
+                         GetInstanceID(), ret );
+
+                return;
+            }
+
+            BP->GetAcceptorBP()->OnAcceptPass();
+        }
+        else
+        {
+            BP->GetAcceptorBP()->OnAcceptReject();
+
+            PLGDebug ( "[Reject] State.PromiseID %lu State.PromiseNodeID %lu",
+                       m_oAcceptorState.GetPromiseBallot().m_llProposalID,
+                       m_oAcceptorState.GetPromiseBallot().m_llNodeID );
+
+            oReplyPaxosMsg.set_rejectbypromiseid ( m_oAcceptorState.GetPromiseBallot().m_llProposalID );
+        }
+
+        nodeid_t iReplyNodeID = oPaxosMsg.nodeid();
+
+        PLGHead ( "END Now.InstanceID %lu ReplyNodeID %lu",
+                  GetInstanceID(), oPaxosMsg.nodeid() );
+
+        SendMessage ( iReplyNodeID, oReplyPaxosMsg );
+    }
+```
 
 ## 质量属性
 
