@@ -311,7 +311,8 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
         //当前已不在Accept阶段
         //1. 某个节点响应过慢，提案已完成
-        //2. 整个提案响应过慢，提案已重新进入Prepare阶段阶段
+        //2. 多个节点响应过慢，提案已重新进入Prepare阶段阶段
+        //3. 整个提案响应过慢，提案已终止
         if ( !m_bIsAccepting )
         {
             //PLGErr("Not proposing, skip this msg");
@@ -319,6 +320,8 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
             return;
         }
 
+        //提案编号不一致，跳过不处理
+        //    proposal id不一致表明一定不是同一个instance id
         if ( oPaxosMsg.proposalid() != m_oProposerState.GetProposalID() )
         {
             //PLGErr("ProposalID not same, skip this msg");
@@ -326,14 +329,17 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
             return;
         }
 
+        //记录已收到node id节点的消息
         m_oMsgCounter.AddReceive ( oPaxosMsg.nodeid() );
 
+        //提案被接收
         if ( oPaxosMsg.rejectbypromiseid() == 0 )
         {
             PLGDebug ( "[Accept]" );
+            //记录接收提案的节点编号
             m_oMsgCounter.AddPromiseOrAccept ( oPaxosMsg.nodeid() );
         }
-        else
+        else    //提案被拒绝
         {
             PLGDebug ( "[Reject]" );
             m_oMsgCounter.AddReject ( oPaxosMsg.nodeid() );
