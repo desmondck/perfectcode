@@ -36,9 +36,11 @@ PhxPaxos整体架构如下：
   * 负责记录确定的有序值。
 
 * **Paxos分组**
+
   * 上一节提到的一个Node同时运行多个Group的能力。
   * 在实现上，Node维护了一个Group的列表，每个Group中包含一个Instance对象
   * instance负责掌控整个Paxos协议的运行，也包括对其他机制的调控。
+
 * **选主服务**
   * 用于确定Paxos的主节点。
 
@@ -167,12 +169,13 @@ Proposer
 
         m_oProposerState.ResetHighestOtherPreAcceptBallot();
 
-        //发起一个新提案
+        //分配一个新的提案编号：Porposal ID
         if ( bNeedNewBallot )
         {
             m_oProposerState.NewPrepare();
         }
 
+        //发起提案：instance id、node id、proposal id
         PaxosMsg oPaxosMsg;
         oPaxosMsg.set_msgtype ( MsgType_PaxosPrepare );
         oPaxosMsg.set_instanceid ( GetInstanceID() );
@@ -181,11 +184,77 @@ Proposer
 
         m_oMsgCounter.StartNewRound();
 
+        //添加定时器，当出现超时后，重新触发Prepare
         AddPrepareTimer();
 
         PLGHead ( "END OK" );
 
         BroadcastMessage ( oPaxosMsg );
+    }
+    
+    //来自各个Acceptor的响应消息
+    void Proposer :: OnPrepareReply ( const PaxosMsg & oPaxosMsg )
+    {
+        PLGHead ( "START Msg.ProposalID %lu State.ProposalID %lu Msg.from_nodeid %lu RejectByPromiseID %lu",
+                  oPaxosMsg.proposalid(), m_oProposerState.GetProposalID(),
+                  oPaxosMsg.nodeid(), oPaxosMsg.rejectbypromiseid() );
+
+        BP->GetProposerBP()->OnPrepareReply();
+
+        //当前以不在Prepare阶段，不处理
+        //1. 某个节点响应过慢，提案已进入到Accept阶段
+        //2. 整个提案响应过慢，提案已终止
+        if ( !m_bIsPreparing )
+        {
+            BP->GetProposerBP()->OnPrepareReplyButNotPreparing();
+            //PLGErr("Not preparing, skip this msg");
+            return;
+        }
+
+        if ( oPaxosMsg.proposalid() != m_oProposerState.GetProposalID() )
+        {
+            BP->GetProposerBP()->OnPrepareReplyNotSameProposalIDMsg();
+            //PLGErr("ProposalID not same, skip this msg");
+            return;
+        }
+
+        //记录已收到来自node id节点的响应
+        m_oMsgCounter.AddReceive ( oPaxosMsg.nodeid() );
+        
+        //提案
+        if ( oPaxosMsg.rejectbypromiseid() == 0 )
+        {
+            BallotNumber oBallot ( oPaxosMsg.preacceptid(), oPaxosMsg.preacceptnodeid() );
+            PLGDebug ( "[Promise] PreAcceptedID %lu PreAcceptedNodeID %lu ValueSize %zu",
+                       oPaxosMsg.preacceptid(), oPaxosMsg.preacceptnodeid(), oPaxosMsg.value().size() );
+            m_oMsgCounter.AddPromiseOrAccept ( oPaxosMsg.nodeid() );
+            m_oProposerState.AddPreAcceptValue ( oBallot, oPaxosMsg.value() );
+        }
+        else
+        {
+            PLGDebug ( "[Reject] RejectByPromiseID %lu", oPaxosMsg.rejectbypromiseid() );
+            m_oMsgCounter.AddReject ( oPaxosMsg.nodeid() );
+            m_bWasRejectBySomeone = true;
+            m_oProposerState.SetOtherProposalID ( oPaxosMsg.rejectbypromiseid() );
+        }
+
+        if ( m_oMsgCounter.IsPassedOnThisRound() )
+        {
+            int iUseTimeMs = m_oTimeStat.Point();
+            BP->GetProposerBP()->PreparePass ( iUseTimeMs );
+            PLGImp ( "[Pass] start accept, usetime %dms", iUseTimeMs );
+            m_bCanSkipPrepare = true;
+            Accept();
+        }
+        else if ( m_oMsgCounter.IsRejectedOnThisRound()
+                  || m_oMsgCounter.IsAllReceiveOnThisRound() )
+        {
+            BP->GetProposerBP()->PrepareNotPass();
+            PLGImp ( "[Not Pass] wait 30ms and restart prepare" );
+            AddPrepareTimer ( OtherUtils::FastRand() % 30 + 10 );
+        }
+
+        PLGHead ( "END" );
     }
 
 ```
