@@ -121,6 +121,8 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
 
 **Proposer**
 
+>
+
 ```cpp
     //发起提案的入口函数
     int Proposer :: NewValue ( const std::string & sValue )
@@ -272,7 +274,8 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
     void Proposer :: Accept()
     {
         PLGHead ( "START ProposalID %lu ValueSize %zu ValueLen %zu",
-                  m_oProposerState.GetProposalID(), m_oProposerState.GetValue().size(), m_oProposerState.GetValue().size() );
+                  m_oProposerState.GetProposalID(), m_oProposerState.GetValue().size(), 
+                  m_oProposerState.GetValue().size() );
 
         BP->GetProposerBP()->Accept();
         m_oTimeStat.Point();
@@ -342,32 +345,41 @@ Paxos协议中规定了三类角色：Proposer、Accetor、Learner。协议实�
         else    //提案被拒绝
         {
             PLGDebug ( "[Reject]" );
+            
+            //记录拒绝提案的节点编号
             m_oMsgCounter.AddReject ( oPaxosMsg.nodeid() );
-
+            //必须重新进入prepare阶段
             m_bWasRejectBySomeone = true;
-
+            //拒绝该提案节点所附的提案编号
             m_oProposerState.SetOtherProposalID ( oPaxosMsg.rejectbypromiseid() );
         }
 
+        //提案通过
         if ( m_oMsgCounter.IsPassedOnThisRound() )
         {
             int iUseTimeMs = m_oTimeStat.Point();
             BP->GetProposerBP()->AcceptPass ( iUseTimeMs );
             PLGImp ( "[Pass] Start send learn, usetime %dms", iUseTimeMs );
+            //退出accept阶段
             ExitAccept();
+            //通知所有节点的learner，提案已Accept(但并不保证chosen)，由learner判定
             m_poLearner->ProposerSendSuccess ( GetInstanceID(), m_oProposerState.GetProposalID() );
         }
+        //提案未通过
         else if ( m_oMsgCounter.IsRejectedOnThisRound()
                   || m_oMsgCounter.IsAllReceiveOnThisRound() )
         {
             BP->GetProposerBP()->AcceptNotPass();
             PLGImp ( "[Not pass] wait 30ms and Restart prepare" );
+            //添加定时器，重新进入Prepare阶段
             AddAcceptTimer ( OtherUtils::FastRand() % 30 + 10 );
         }
 
         PLGHead ( "END" );
     }
 ```
+
+
 
 ## 质量属性
 
