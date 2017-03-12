@@ -2,9 +2,9 @@
 
 ## 1 Introduction
 
-The Paxos algorithm for implementing a fault-tolerant distributed system has been regarded as difficult to understand, perhaps because the original presentation was Greek to many readers \[5\]. 
+The Paxos algorithm for implementing a fault-tolerant distributed system has been regarded as difficult to understand, perhaps because the original presentation was Greek to many readers \[5\].
 
-In fact, it is among the simplest and most obvious of distributed algorithms. At its heart is a consensus algorithm—the “synod” algorithm of \[5\]. The next section shows that this consensus algorithm follows almost unavoidably from the properties we want it to satisfy. 
+In fact, it is among the simplest and most obvious of distributed algorithms. At its heart is a consensus algorithm—the “synod” algorithm of \[5\]. The next section shows that this consensus algorithm follows almost unavoidably from the properties we want it to satisfy.
 
 The last section explains the complete Paxos algorithm, which is obtained by the straightforward application of consensus to the state machine approach for building a distributed system—an approach that should be well-known, since it is the subject of what is probably the most often-cited article on the theory of distributed systems \[4\].
 
@@ -12,23 +12,17 @@ The last section explains the complete Paxos algorithm, which is obtained by the
 
 ### 2.1 The Problem
 
-Assume a collection of processes that can propose values. A consensus al
-
-gorithm ensures that a single one among the proposed values is chosen. If
-
-no value is proposed, then no value should be chosen. If a value has been
-
-chosen, then processes should be able to learn the chosen value. The safety
-
-requirements for consensus are:
+Assume a collection of processes that can propose values. A consensus algorithm ensures that a single one among the proposed values is chosen. If no value is proposed, then no value should be chosen. If a value has been chosen, then processes should be able to learn the chosen value. The safety requirements for consensus are:
 
 • Only a value that has been proposed may be chosen,
 
+**只有被推举的值会被选中**
+
 • Only a single value is chosen, and
 
-• A process never learns that a value has been chosen unless it actually
+**只有一个值会被选中**
 
-has been.
+• A process never learns that a value has been chosen unless it actually has been.
 
 We won’t try to specify precise liveness requirements. However, the goal is
 
