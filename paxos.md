@@ -2,7 +2,10 @@
 
 1 Introduction
 
-The Paxos algorithm for implementing a fault-tolerant distributed system has been regarded as difficult to understand, perhaps because the original presentation was Greek to many readers \[5\]. In fact, it is among the simplest and most obvious of distributed algorithms. At its heart is a consensus algorithm—the “synod” algorithm of \[5\]. The next section shows that this
+The Paxos algorithm for implementing a fault-tolerant distributed system has been regarded as difficult to understand, perhaps because the original  
+ presentation was Greek to many readers \[5\]. In fact, it is among the sim  
+plest and most obvious of distributed algorithms. At its heart is a consensus  
+ algorithm—the “synod” algorithm of \[5\]. The next section shows that this
 
 consensus algorithm follows almost unavoidably from the properties we want
 
@@ -55,6 +58,4 @@ agents to processes does not concern us here.
 Assume that agents can communicate with one another by sending mes
 
 sages. We use the customary asynchronous, non-Byzantine model, in which:
-
-
 
