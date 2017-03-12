@@ -1,25 +1,16 @@
 # Paxos made simple释译
 
-1 Introduction
+## 1 Introduction
 
-The Paxos algorithm for implementing a fault-tolerant distributed system has been regarded as difficult to understand, perhaps because the original presentation was Greek to many readers \[5\]. In fact, it is among the simplest and most obvious of distributed algorithms. At its heart is a consensus  
- algorithm—the “synod” algorithm of \[5\]. The next section shows that this
+The Paxos algorithm for implementing a fault-tolerant distributed system has been regarded as difficult to understand, perhaps because the original presentation was Greek to many readers \[5\]. 
 
-consensus algorithm follows almost unavoidably from the properties we want
+In fact, it is among the simplest and most obvious of distributed algorithms. At its heart is a consensus algorithm—the “synod” algorithm of \[5\]. The next section shows that this consensus algorithm follows almost unavoidably from the properties we want it to satisfy. 
 
-it to satisfy. The last section explains the complete Paxos algorithm, which
+The last section explains the complete Paxos algorithm, which is obtained by the straightforward application of consensus to the state machine approach for building a distributed system—an approach that should be well-known, since it is the subject of what is probably the most often-cited article on the theory of distributed systems \[4\].
 
-is obtained by the straightforward application of consensus to the state ma
+## 2 The Consensus Algorithm
 
-chine approach for building a distributed system—an approach that should
-
-be well-known, since it is the subject of what is probably the most often-cited
-
-article on the theory of distributed systems \[4\].
-
-2 The Consensus Algorithm
-
-2.1 The Problem
+### 2.1 The Problem
 
 Assume a collection of processes that can propose values. A consensus al
 
