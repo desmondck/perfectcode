@@ -1,4 +1,4 @@
-# Paxos made simple释译
+# 、Paxos made simple释译
 
 ## 1 Introduction
 
@@ -33,7 +33,9 @@ Assume a collection of **processes** that can **propose** values. A consensus al
 
 We won’t try to specify precise liveness requirements. However, the goal is to ensure that some proposed value is eventually chosen and, if a value has been chosen, then a process can eventually learn the value.
 
-> 上面
+> 上面一段只在将一件事件：
+>
+> 多个process发起多个提议时，paxos确保只有一个提议值（value）被选中（chosen），并且其他process可以习得（learn）这个选中值，从而确保多个process在最终达成一致
 
 We let the three roles in the consensus algorithm be performed by three classes of agents: proposers, acceptors, and learners. In an implementation, a single process may act as more than one agent, but the mapping from agents to processes does not concern us here. Assume that agents can communicate with one another by sending messages. We use the customary asynchronous, non-Byzantine model, in which:
 
