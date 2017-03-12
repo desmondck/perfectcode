@@ -16,29 +16,17 @@ Assume a collection of processes that can propose values. A consensus algorithm 
 
 • Only a value that has been proposed may be chosen,
 
-**只有被推举的值会被选中**
+**只有被推举的值会被选中（chosen）**
 
 • Only a single value is chosen, and
 
-**只有一个值会被选中**
+**只有一个值会被选中（chosen）**
 
 • A process never learns that a value has been chosen unless it actually has been.
 
-We won’t try to specify precise liveness requirements. However, the goal is
+**直到一个值确实被选中（chosen），process才知道这个值被选中**
 
-to ensure that some proposed value is eventually chosen and, if a value has
+We won’t try to specify precise liveness requirements. However, the goal is to ensure that some proposed value is eventually chosen and, if a value has been chosen, then a process can eventually learn the value.
 
-been chosen, then a process can eventually learn the value.
-
-We let the three roles in the consensus algorithm be performed by three
-
-classes of agents: proposers, acceptors, and learners. In an implementation,
-
-a single process may act as more than one agent, but the mapping from
-
-agents to processes does not concern us here.
-
-Assume that agents can communicate with one another by sending mes
-
-sages. We use the customary asynchronous, non-Byzantine model, in which:
+We let the three roles in the consensus algorithm be performed by three classes of agents: proposers, acceptors, and learners. In an implementation, a single process may act as more than one agent, but the mapping from agents to processes does not concern us here. Assume that agents can communicate with one another by sending messages. We use the customary asynchronous, non-Byzantine model, in which:
 
