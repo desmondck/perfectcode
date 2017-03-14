@@ -91,7 +91,7 @@ and P2a requires strengthening P2a to:
 
 Since a proposal must be issued by a proposer before it can be accepted by an acceptor, P2b implies P2a, which in turn implies P2. To discover how to satisfy P2b, let’s consider how we would prove that it holds. We would assume that some proposal with number m and value v is chosen and show that any proposal issued with number n &gt; m also has value v. We would make the proof easier by using induction on n, so we can prove that proposal number n has value v under the additional assumption that every proposal issued with a number in m . . \(n − 1\) has value v, where i . . j denotes the set of numbers from i through j . For the proposal numbered m to be chosen, there must be some set C consisting of a majority of acceptors such that every acceptor in C accepted it. Combining this with the induction assumption, the hypothesis that m is chosen implies:
 
-Every acceptor in C has accepted a proposal with number in的的  
+Every acceptor in C has accepted a proposal with number in的的的  
  m . . \(n − 1\), and every proposal with number in m . . \(n − 1\)  
  accepted by any acceptor has value v.
 
@@ -103,7 +103,7 @@ Since any set S consisting of a majority of acceptors contains at least one
  then there is a set S consisting of a majority of acceptors such that  
  either \(a\) no acceptor in S has accepted any proposal numbered less  
  than n, or \(b\) v is the value of the highest-numbered proposal among  
- all proposals numbered less than n accepted by the acceptors in S.    
+ all proposals numbered less than n accepted by the acceptors in S.      
 **
 
 P2c.对于任意的n和v，如果编号为n、value值为v的提案被提出，那么肯定存在一个由半数以上的acceptor组成的集合S，可以满足条件a\)或者b\)中的一个：a\) S中不存在任何的acceptor通过过编号小于n的提案. b\) v是S中所有acceptor通过的编号小于n的具有最大编号的提案的value值.
