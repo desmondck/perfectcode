@@ -96,25 +96,12 @@ Every acceptor in C has accepted a proposal with number in m . . \(n − 1\), an
 
 Since any set S consisting of a majority of acceptors contains at least one member of C , we can conclude that a proposal numbered n has value v by ensuring that the following invariant is maintained:
 
-**P2c. For any v and n, if a proposal with value v and number n is issued, then there is a set S consisting of a majority of acceptors such that either \(a\) no acceptor in S has accepted any proposal numbered less than n, or \(b\) v is the value of the highest-numbered proposal among all proposals numbered less than n accepted by the acceptors in S.        
-**P2c.对于任意的n和v，如果编号为n、value值为v的提案被提出，那么肯定存在一个由半数以上的acceptor组成的集合S，可以满足条件a\)或者b\)中的一个：a\) S中不存在任何的acceptor通过过编号小于n的提案. b\) v是S中所有acceptor通过的编号小于n的具有最大编号的提案的value值.
+**P2c. For any v and n, if a proposal with value v and number n is issued, then there is a set S consisting of a majority of acceptors such that either \(a\) no acceptor in S has accepted any proposal numbered less than n, or \(b\) v is the value of the highest-numbered proposal among all proposals numbered less than n accepted by the acceptors in S.          
+P2c.对于任意的n和v，如果编号为n、value值为v的提案被提出，那么肯定存在一个由半数以上的acceptor组成的集合S，可以满足条件a\)或者b\)中的一个：a\) S中不存在任何的acceptor通过过编号小于n的提案. b\) v是S中所有acceptor通过的编号小于n的具有最大编号的提案的value值.**
 
-We can therefore satisfy P2b by maintaining the invariance of P2c.  
- To maintain the invariance of P2c, a proposer that wants to issue a pro  
-posal numbered n must learn the highest-numbered proposal with number  
- less than n, if any, that has been or will be accepted by each acceptor in
+We can therefore satisfy P2b by maintaining the invariance of P2c. To maintain the invariance of P2c, a proposer that wants to issue a proposal numbered n must learn the highest-numbered proposal with number less than n, if any, that has been or will be accepted by each acceptor in some majority of acceptors. Learning about proposals already accepted is easy enough; predicting future acceptances is hard. Instead of trying to predict the future, the proposer controls it by extracting a promise that there
 
-some majority of acceptors. Learning about proposals already accepted is
-
-easy enough; predicting future acceptances is hard. Instead of trying to pre
-
-dict the future, the proposer controls it by extracting a promise that there
-
-won’t be any such acceptances. In other words, the proposer requests that
-
-the acceptors not accept any more proposals numbered less than n. This
-
-leads to the following algorithm for issuing proposals.
+won’t be any such acceptances. In other words, the proposer requests that the acceptors not accept any more proposals numbered less than n. This leads to the following algorithm for issuing proposals.
 
 1. A proposer chooses a new proposal number n and sends a request to
 
