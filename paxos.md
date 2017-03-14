@@ -99,34 +99,21 @@ Since any set S consisting of a majority of acceptors contains at least one memb
 **P2c. For any v and n, if a proposal with value v and number n is issued, then there is a set S consisting of a majority of acceptors such that either \(a\) no acceptor in S has accepted any proposal numbered less than n, or \(b\) v is the value of the highest-numbered proposal among all proposals numbered less than n accepted by the acceptors in S.  
 P2c.对于任意的n和v，如果编号为n、value值为v的提案被提出，那么肯定存在一个由半数以上的acceptor组成的集合S，可以满足条件a\)或者b\)中的一个：a\) S中不存在任何的acceptor通过过编号小于n的提案. b\) v是S中所有acceptor通过的编号小于n的具有最大编号的提案的value值.**
 
-> 核心理念如下：
->
-> 1. 每一个提案由{编号n、值v}组成
-> 2. 一个编号
-
 We can therefore satisfy P2b by maintaining the invariance of P2c. To maintain the invariance of P2c, a proposer that wants to issue a proposal numbered n must learn the highest-numbered proposal with number less than n, if any, that has been or will be accepted by each acceptor in some majority of acceptors. Learning about proposals already accepted is easy enough; predicting future acceptances is hard. Instead of trying to predict the future, the proposer controls it by extracting a promise that there won’t be any such acceptances. In other words, the proposer requests that the acceptors not accept any more proposals numbered less than n. This leads to the following algorithm for issuing proposals.
 
-1. A proposer chooses a new proposal number n and sends a request to
+1. **A proposer chooses a new proposal number n and sends a request to each member of some set of acceptors, asking it to respond with:**
+   1. **A promise never again to accept a proposal numbered less than n, and **
+   2. **The proposal **_**value**_** with the highest number less than n that it has accepted, if any. **
 
-each member of some set of acceptors, asking it to respond with:
+   **I will call such a request a prepare request with number n.**
+2. **If the proposer receives the requested responses from a majority of the acceptors, then it can issue a proposal with number n and value v, where v is the value of the highest-numbered proposal among the responses, or is any value selected by the proposer if the responders reported no proposals.**
 
-\(a\) A promise never again to accept a proposal numbered less than
+> 到这里，选举核心算法已推倒完成：
+>
+> 1. proposer选择新的编号n，并将其发送到所有的acceptor\(整个过程称之为prepare阶段\)
+> 2. acceptor接收到请求后完成如下工作：
+>    1. 承诺\(promise\)：承诺不再accept所有编号小于n的请求
+>    2. 返回\(reply\)：返回小于n的最大编号所对应的提议值\(如果存在\)
 
-n, and
 
-\(b\) The proposal with the highest number less than n that it has
-
-accepted, if any.
-
-I will call such a request a prepare request with number n.
-
-1. If the proposer receives the requested responses from a majority of
-
-the acceptors, then it can issue a proposal with number n and value
-
-v, where v is the value of the highest-numbered proposal among the
-
-responses, or is any value selected by the proposer if the responders
-
-reported no proposals.
 
