@@ -88,6 +88,8 @@ and P2a requires strengthening P2a to:
 **P2b.如果具有value值v的提案被选定，那么所有比它编号更高的被proposer提出的提案的value值也必须是v**
 
 > 注意：这里强调的是issued
+>
+> chosen-&gt;accept-&gt;issued
 
 Since a proposal must be issued by a proposer before it can be accepted by an acceptor, P2b implies P2a, which in turn implies P2. To discover how to satisfy P2b, let’s consider how we would prove that it holds. We would assume that some proposal with number m and value v is chosen and show that any proposal issued with number n &gt; m also has value v. We would make the proof easier by using induction on n, so we can prove that proposal number n has value v under the additional assumption that every proposal issued with a number in m . . \(n − 1\) has value v, where i . . j denotes the set of numbers from i through j . For the proposal numbered m to be chosen, there must be some set C consisting of a majority of acceptors such that every acceptor in C accepted it. Combining this with the induction assumption, the hypothesis that m is chosen implies:
 
