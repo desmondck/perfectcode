@@ -133,18 +133,8 @@ Observe that P1a subsumes P1. We now have a complete algorithm for choosing a va
 > 这里针对P1的定义做了进一步的强化
 >
 > **P1a.一个acceptor可以接受一个编号为n的提案，只要它还未响应任何编号大于n的prepare请求**
->
-> 举例，
 
-With this optimization, an acceptor needs to remember only the highestnumbered proposal that it has ever accepted and the number of the highestnumbered prepare request to which it has responded. Because P2c must
-
-be kept invariant regardless of failures, an acceptor must remember this
-
-information even if it fails and then restarts. Note that the proposer can
-
-always abandon a proposal and forget all about it—as long as it never tries
-
-to issue another proposal with the same number.
+With this optimization, an acceptor needs to remember only the highestnumbered proposal that it has ever accepted and the number of the highestnumbered prepare request to which it has responded. Because P2c must be kept invariant regardless of failures, an acceptor must remember this information even if it fails and then restarts. Note that the proposer can always abandon a proposal and forget all about it—as long as it never tries to issue another proposal with the same number.
 
 Putting the actions of the proposer and acceptor together, we see that
 
