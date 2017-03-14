@@ -109,7 +109,7 @@ We can therefore satisfy P2b by maintaining the invariance of P2c. To maintain t
 
 2. **If the proposer receives the requested responses from a majority of the acceptors, then it can issue a proposal with number n and value v, where v is the value of the highest-numbered proposal among the responses, or is any value selected by the proposer if the responders reported no proposals.**
 
-A proposer issues a proposal by sending, to some set of acceptors, a request that the proposal be accepted. \(This need not be the same set of acceptors that responded to the initial requests.\) Let’s call this an accept request.
+A proposer issues a proposal by sending, to some set of acceptors, a request that the proposal be accepted. \(This need not be the same set of acceptors that responded to the initial requests.\) Let’s call this an accept request.
 
 > 一个完整的提案由{编号n，提案值v}两部分组成，提案的确定及发起流程如下：  
 > 1. prepare阶段：根据提案编号n确定提案值  
@@ -123,11 +123,12 @@ A proposer issues a proposal by sending, to some set of acceptors, a request th
 >
 > 上述为paxos选举的完整过程
 
-This describes a proposer’s algorithm. What about an acceptor? It can receive two kinds of requests from proposers: prepare requests and accept requests. An acceptor can ignore any request without compromising safety. So, we need to say only when it is allowed to respond to a request. It can always respond to a prepare request. It can respond to an accept request, accepting the proposal, iff it has not promised not to. In other words:
+This describes a proposer’s algorithm. What about an acceptor? It can receive two kinds of requests from proposers: prepare requests and accept requests. An acceptor can ignore any request without compromising safety. So, we need to say only when it is allowed to respond to a request. It can always respond to a prepare request. It can respond to an accept request, accepting the proposal, iff it has not promised not to. In other words:
 
-**P1a. An acceptor can accept a proposal numbered n iff it has not responded to a prepare request having a number greater than n.**
+**P1a. An acceptor can accept a proposal numbered n iff it has not responded to a prepare request having a number greater than n.  
+**
 
-Observe that P1a subsumes P1. We now have a complete algorithm for choosing a value that satisfies the required safety properties—assuming unique proposal numbers. The final algorithm is obtained by making one small optimization. Suppose an acceptor receives a prepare request numbered n, but it has already responded to a prepare request numbered greater than n, thereby promising not to accept any new proposal numbered n. There is then no reason for the acceptor to respond to the new prepare request, since it will not accept the proposal numbered n that the proposer wants to issue. So we have the acceptor ignore such a prepare request. We also have it ignore a prepare request for a proposal it has already accepted.
+Observe that P1a subsumes P1. We now have a complete algorithm for choosing a value that satisfies the required safety properties—assuming unique proposal numbers. The final algorithm is obtained by making one small optimization. Suppose an acceptor receives a prepare request numbered n, but it has already responded to a prepare request numbered greater than n, thereby promising not to accept any new proposal numbered n. There is then no reason for the acceptor to respond to the new prepare request, since it will not accept the proposal numbered n that the proposer wants to issue. So we have the acceptor ignore such a prepare request. We also have it ignore a prepare request for a proposal it has already accepted.
 
 > **P1：一个acceptor必须通过\(accept\)它收到的第一个提案**
 >
@@ -158,6 +159,4 @@ than that of any prepare request to which it has already responded,
 then it responds to the request with a promise not to accept any more
 
 proposals numbered less than n and with the highest-numbered proposal \(if any\) that it has accepted.
-
-
 
