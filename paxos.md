@@ -1,4 +1,4 @@
-# 、Paxos made simple释译
+# Paxos made simple释译
 
 ## 1 Introduction
 
@@ -111,14 +111,14 @@ We can therefore satisfy P2b by maintaining the invariance of P2c. To maintain t
 
 > 到这里，选举核心算法已推倒完成：
 >
-> 一个完整的提案由{编号n，提案值v}两部分组成，提案的确定及发起流程如下：
-> 1. prepare阶段：根据提案编号n确定提案值
->    1. proposer选择新的编号n，并将其发送到所有的acceptor
->    2. acceptor接收到请求后完成如下工作：
->       1. 承诺\(promise\)：承诺不再accept所有编号小于n的请求，即reject编号小于n的请求
->       2. 返回\(reply\)：返回当前accept的最大编号所对应的提议值v\(如果存在\)
-> 2. accept阶段
->    1. 如果proposer收到了超过半数的acceptor响应，此时才可以真正的发起提案，否则本轮提案以失败结束
+> 一个完整的提案由{编号n，提案值v}两部分组成，提案的确定及发起流程如下：  
+> 1. prepare阶段：根据提案编号n确定提案值  
+>    1. proposer选择新的编号n，并将其发送到所有的acceptor  
+>    2. acceptor接收到请求后完成如下工作：  
+>       1. 承诺\(promise\)：承诺不再accept所有编号小于n的请求，即reject编号小于n的请求  
+>       2. 返回\(reply\)：返回当前accept的最大编号所对应的提议值v\(如果存在\)  
+> 2. accept阶段  
+>    1. 如果proposer收到了超过半数的acceptor响应，此时才可以真正的发起提案，否则本轮提案以失败结束  
 >    2. 提案的编号为n，提案值为v，如果提议值v不存在，则可由proposer指定任意值
 
 
